@@ -162,11 +162,13 @@ if settings['os_version'] == "osx":
             osascript -e 'tell application "System Events" to keystroke "c" using {command down}'
             """
             os.system(cmd)
-        if key  == 'paste':
+        elif key  == 'paste':
             cmd = """
             osascript -e 'tell application "System Events" to keystroke "v" using {command down}'
             """
             os.system(cmd)
+        elif key  == 'screenshot':
+            os.system('screencapture -c -i')
 
     def get_keycode(key):
         if key == "control_mod": #command

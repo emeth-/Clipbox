@@ -13,7 +13,7 @@ cb_helper.py - Some OS specific functions.
 
 screenshotRect.py - A class to take a screenshot based off a rectangle selected by the user, Windows only
 
-toasterbox.py - The notification system. 
+toasterbox.py - The notification system.
 
 UltimateListCtrl.py - List Controls on steroids. Probably a bit out of date, but I'm a bit scared to update as I vaguely recall hacking some things in this file.
 
@@ -39,7 +39,7 @@ Python Imaging Library 1.1.7 Source Kit (http://effbot.org/downloads/Imaging-1.1
 
 Compile:
 $ python2.7 py2app.py py2app
-$ python2.7 onbuild.py
+$ python2.7 after_osx_build.py
 
 ---WINDOWS---
 Libraries I Use:
@@ -76,6 +76,7 @@ There are two versions, one for the Mac OSX and one for Windows XP or above.
 - control + shift + c = Clipbox Copy (sends control + c to foremost window, sends as paste)
 - control + shift + v = Clipbox Paste (loads whatever your last clipbox copy was into your clipboard, sends control + v to foremost window)
 - control + shift + r = Recent Pastes (shows list of all pastes you have pending)
+- control + shift + x = Grabs rectangular screenshot that you specify, stores in clipboard, sends paste
 
 **Mutations of Clipbox Copy**
 - control + shift + a = Public Copy (puts a URL in your clipboard for you to share)
@@ -93,6 +94,3 @@ There are two versions, one for the Mac OSX and one for Windows XP or above.
 
 **Mutations of Clipbox Copy**
 - cmd + shift + a = Public Copy (puts a URL in your clipboard for you to share)
-
-
-

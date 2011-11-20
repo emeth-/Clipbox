@@ -780,12 +780,11 @@ class mainFrame(wx.Frame, wx.lib.mixins.listctrl.ColumnSorterMixin):
         self.Bind(wx.EVT_HOTKEY, self.handleHotKey, id=self.hotPublicCopy)
         self.Bind(wx.EVT_HOTKEY, self.handleHotKey, id=self.hotPaste)
         self.Bind(wx.EVT_HOTKEY, self.handleHotKey, id=self.hotRecent)
+        self.Bind(wx.EVT_HOTKEY, self.handleHotKey, id=self.hotScreenRect)
         if settings['os_version'] == 'win':
             self.Bind(wx.EVT_HOTKEY, self.handleHotKey, id=self.hotCut)
             self.Bind(wx.EVT_HOTKEY, self.handleHotKey, id=self.hotScreen)
-            self.Bind(wx.EVT_HOTKEY, self.handleHotKey, id=self.hotScreenRect)
             self.Bind(wx.EVT_HOTKEY, self.handleHotKey, id=self.hotCurrent)
-
 
         icon1 = wx.Icon("images/clipboard.png", wx.BITMAP_TYPE_PNG)
         self.SetIcon(icon1)
@@ -859,11 +858,6 @@ class mainFrame(wx.Frame, wx.lib.mixins.listctrl.ColumnSorterMixin):
                 mod_control | mod_shift, #the modifier keys
                 cb_helper.get_keycode('3')) #the key to watch for (0x33 = 3)
 
-            self.hotScreenRect = 104
-            self.RegisterHotKey(
-                self.hotScreenRect, #a unique ID for this hotkey
-                mod_control | mod_shift, #the modifier keys
-                cb_helper.get_keycode('4')) #the key to watch for (0x34 = 4)
 
             self.hotCut = 105
             self.RegisterHotKey(
@@ -876,6 +870,13 @@ class mainFrame(wx.Frame, wx.lib.mixins.listctrl.ColumnSorterMixin):
                 self.hotCurrent, #a unique ID for this hotkey
                 mod_control | mod_shift, #the modifier keys
                 cb_helper.get_keycode('1')) #the key to watch for (0x31 = 1)
+
+        elif settings['os_version'] == 'osx':
+            self.hotScreenRect = 104
+            self.RegisterHotKey(
+                self.hotScreenRect, #a unique ID for this hotkey
+                mod_control | mod_shift, #the modifier keys
+                cb_helper.get_keycode('x'))
 
 
 
@@ -895,53 +896,58 @@ class mainFrame(wx.Frame, wx.lib.mixins.listctrl.ColumnSorterMixin):
 
         if eventId == 104: #hotScreenRect
 
-            ssdlg = screenshotRect.Screen_Capture(None)
-            ssdlg.ShowModal()
-            ssdlg.Raise()
-            x1 = min(ssdlg.c1.x, ssdlg.c2.x)
-            x2 = max(ssdlg.c1.x, ssdlg.c2.x)
-            y1 = min(ssdlg.c1.y, ssdlg.c2.y)
-            y2 = max(ssdlg.c1.y, ssdlg.c2.y)
-            captureBmapSize = (x2-x1, y2-y1)
-            #captureBmapSize = (wx.SystemSettings.GetMetric( wx.SYS_SCREEN_X ),
-            #wx.SystemSettings.GetMetric( wx.SYS_SCREEN_Y ) )
-            captureStartPos = (x1, y1)    # Arbitrary U-L position anywhere within the screen
-            scrDC = wx.ScreenDC()
-            scrDcSize = scrDC.Size
-            scrDcSizeX, scrDcSizeY = scrDcSize
+            if settings['os_version'] == 'osx':
+                cb_helper.send_key('screenshot')
+                self.onHotPublicCopy()
 
-            # Cross-platform adaptations :
-            scrDcBmap     = scrDC.GetAsBitmap()
-            scrDcBmapSize = scrDcBmap.GetSize()
+            elif settings['os_version'] == 'win':
+                ssdlg = screenshotRect.Screen_Capture(None)
+                ssdlg.ShowModal()
+                ssdlg.Raise()
+                x1 = min(ssdlg.c1.x, ssdlg.c2.x)
+                x2 = max(ssdlg.c1.x, ssdlg.c2.x)
+                y1 = min(ssdlg.c1.y, ssdlg.c2.y)
+                y2 = max(ssdlg.c1.y, ssdlg.c2.y)
+                captureBmapSize = (x2-x1, y2-y1)
+                #captureBmapSize = (wx.SystemSettings.GetMetric( wx.SYS_SCREEN_X ),
+                #wx.SystemSettings.GetMetric( wx.SYS_SCREEN_Y ) )
+                captureStartPos = (x1, y1)    # Arbitrary U-L position anywhere within the screen
+                scrDC = wx.ScreenDC()
+                scrDcSize = scrDC.Size
+                scrDcSizeX, scrDcSizeY = scrDcSize
 
-            # Check if scrDC.GetAsBitmap() method has been implemented on this platform.
-            if   scrDcBmapSize == (0, 0) :      # Not implemented :  Get the screen bitmap the long way.
+                # Cross-platform adaptations :
+                scrDcBmap     = scrDC.GetAsBitmap()
+                scrDcBmapSize = scrDcBmap.GetSize()
 
-                scrDcBmap = wx.EmptyBitmap( *scrDcSize )
-                scrDcBmapSizeX, scrDcBmapSizeY = scrDcSize
+                # Check if scrDC.GetAsBitmap() method has been implemented on this platform.
+                if   scrDcBmapSize == (0, 0) :      # Not implemented :  Get the screen bitmap the long way.
 
-                memDC = wx.MemoryDC( scrDcBmap )
+                    scrDcBmap = wx.EmptyBitmap( *scrDcSize )
+                    scrDcBmapSizeX, scrDcBmapSizeY = scrDcSize
 
-                memDC.Blit( 0, 0,                           # Copy to this start coordinate.
-                            scrDcBmapSizeX, scrDcBmapSizeY, # Copy an area this size.
-                            scrDC,                          # Copy from this DC's bitmap.
-                            0, 0,                    )      # Copy from this start coordinate.
+                    memDC = wx.MemoryDC( scrDcBmap )
 
-                memDC.SelectObject( wx.NullBitmap )     # Finish using this wx.MemoryDC.
-                                                        # Release scrDcBmap for other uses.
-            else :
-                scrDcBmap = scrDC.GetAsBitmap()     # So easy !  Copy the entire Desktop bitmap.
+                    memDC.Blit( 0, 0,                           # Copy to this start coordinate.
+                                scrDcBmapSizeX, scrDcBmapSizeY, # Copy an area this size.
+                                scrDC,                          # Copy from this DC's bitmap.
+                                0, 0,                    )      # Copy from this start coordinate.
 
-            bitmap = scrDcBmap.GetSubBitmap( wx.RectPS( captureStartPos, captureBmapSize ) )
-            bitmap.SaveFile( 'temp/screenshot.png', wx.BITMAP_TYPE_PNG )
+                    memDC.SelectObject( wx.NullBitmap )     # Finish using this wx.MemoryDC.
+                                                            # Release scrDcBmap for other uses.
+                else :
+                    scrDcBmap = scrDC.GetAsBitmap()     # So easy !  Copy the entire Desktop bitmap.
 
-            bd = wx.BitmapDataObject()
-            bimgsucc = bd.SetBitmap(bitmap)
-            if wx.TheClipboard.Open():
-                successb = wx.TheClipboard.SetData(bd)
-                wx.TheClipboard.Close()
+                bitmap = scrDcBmap.GetSubBitmap( wx.RectPS( captureStartPos, captureBmapSize ) )
+                bitmap.SaveFile( 'temp/screenshot.png', wx.BITMAP_TYPE_PNG )
 
-            self.onHotCopy()
+                bd = wx.BitmapDataObject()
+                bimgsucc = bd.SetBitmap(bitmap)
+                if wx.TheClipboard.Open():
+                    successb = wx.TheClipboard.SetData(bd)
+                    wx.TheClipboard.Close()
+
+                self.onHotCopy()
         if eventId == 103: #hotScreen
             captureBmapSize = (wx.SystemSettings.GetMetric( wx.SYS_SCREEN_X ),
             wx.SystemSettings.GetMetric( wx.SYS_SCREEN_Y ) )
