@@ -93,4 +93,4 @@ There are two versions, one for the Mac OSX and one for Windows XP or above.
 
 **Mutations of Clipbox Copy**
 - cmd + shift + a = Public Copy (puts a URL in your clipboard for you to share)
-- cmd + shift + x = Grabs rectangular screenshot that you specify, stores in clipboard, sends paste
+- cmd + shift + x = Grabs rectangular screenshot that you specify, stores in clipboard, sends PUBLIC paste
