@@ -76,7 +76,6 @@ There are two versions, one for the Mac OSX and one for Windows XP or above.
 - control + shift + c = Clipbox Copy (sends control + c to foremost window, sends as paste)
 - control + shift + v = Clipbox Paste (loads whatever your last clipbox copy was into your clipboard, sends control + v to foremost window)
 - control + shift + r = Recent Pastes (shows list of all pastes you have pending)
-- control + shift + x = Grabs rectangular screenshot that you specify, stores in clipboard, sends paste
 
 **Mutations of Clipbox Copy**
 - control + shift + a = Public Copy (puts a URL in your clipboard for you to share)
@@ -94,3 +93,4 @@ There are two versions, one for the Mac OSX and one for Windows XP or above.
 
 **Mutations of Clipbox Copy**
 - cmd + shift + a = Public Copy (puts a URL in your clipboard for you to share)
+- cmd + shift + x = Grabs rectangular screenshot that you specify, stores in clipboard, sends paste
