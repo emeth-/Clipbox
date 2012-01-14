@@ -46,7 +46,7 @@ def delete_paste(pasteID, db_path):
 def add_paste_to_db(ptype, meta, pasteID, db_path, dbfile):
     try:
         pasteListF = open(db_path+'.'+hash_it(dbfile), 'r')
-        pasteListS = pasteListF.read()
+        pasteListS = pasteListF.read()[8:-2]
         pasteListF.close()
 
         pasteList = json.loads(pasteListS)
@@ -58,7 +58,7 @@ def add_paste_to_db(ptype, meta, pasteID, db_path, dbfile):
 
     try:
         pasteListF = open(db_path+'.'+hash_it(dbfile), 'w')
-        pasteListF.write(json.dumps(pasteList))
+        pasteListF.write('clipbox('+json.dumps(pasteList)+');')
         pasteListF.close()
     except:
         print "unable to write to ."+hash_it(dbfile)
@@ -87,7 +87,7 @@ def retrievePasteObject(pasteID, db_path, dbfile):
 def remove_paste_from_db(pasteID, db_path, dbfile):
     try:
         pasteListF = open(db_path+'.'+hash_it(dbfile), 'r')
-        pasteListS = pasteListF.read()
+        pasteListS = pasteListF.read()[8:-2]
         pasteListF.close()
         pasteList = json.loads(pasteListS)
     except:
@@ -100,7 +100,7 @@ def remove_paste_from_db(pasteID, db_path, dbfile):
 
     try:
         pasteListF = open(db_path+'.'+hash_it(dbfile), 'w')
-        pasteListF.write(json.dumps(pasteList))
+        pasteListF.write('clipbox('+json.dumps(pasteList)+');')
         pasteListF.close()
     except:
         print "unable to write to ."+hash_it(dbfile)
@@ -110,11 +110,11 @@ def remove_paste_from_db(pasteID, db_path, dbfile):
 def getPasteList(db_path, dbfile):
     try:
         pasteListF = open(db_path+'.'+hash_it(dbfile), 'r')
-        pasteListS = pasteListF.read()
+        pasteListS = pasteListF.read()[8:-2]
         pasteListF.close()
 
         pasteList = json.loads(pasteListS)
         return pasteList
     except:
-        print "Unable to load ."+hash_it(dbfile)
+        #print "Unable to load ."+hash_it(dbfile)
         return []

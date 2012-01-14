@@ -38,8 +38,8 @@ py2app (http://pypi.python.org/packages/source/p/py2app/py2app-0.6.3.tar.gz#md5=
 Python Imaging Library 1.1.7 Source Kit (http://effbot.org/downloads/Imaging-1.1.7.tar.gz)
 
 Compile:
-$ python2.7 py2app.py py2app
-$ python2.7 after_osx_build.py
+$ python py2app.py py2app
+$ python after_osx_build.py
 
 ---WINDOWS---
 Libraries I Use:

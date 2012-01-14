@@ -213,7 +213,7 @@ class LoginWin(wx.Dialog):
             elif settings['os_version'] == 'win':
                 settings['db_public_path'] = dbox_location + '\\Public\\'
         if settings['db_public_url'] == "":
-            settings['db_public_url'] = 'YOUR_USERID_HERE'
+            settings['db_public_url'] = ''
 
         self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
 
