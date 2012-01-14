@@ -29,6 +29,13 @@ import os
 
 import random, string, time
 
+import hashlib
+
+def hash_it(input):
+    md5 = hashlib.md5()
+    md5.update('Royale.'+input)
+    return md5.hexdigest()
+
 def delete_paste(pasteID, db_path):
     try:
         os.remove(db_path+pasteID)
@@ -36,55 +43,55 @@ def delete_paste(pasteID, db_path):
     except:
         return 0
 
-def add_paste_to_db(ptype, meta, pasteID, db_path):
+def add_paste_to_db(ptype, meta, pasteID, db_path, dbfile):
     try:
-        pasteListF = open(db_path+'.pastes', 'r')
+        pasteListF = open(db_path+'.'+hash_it(dbfile), 'r')
         pasteListS = pasteListF.read()
         pasteListF.close()
 
         pasteList = json.loads(pasteListS)
     except:
-        print "unable to open .pastes"
+        print "unable to open ."+hash_it(dbfile)
         pasteList = []
 
     pasteList.append({"type":ptype, "meta":meta, "id":pasteID, "time":int(time.time())})
 
     try:
-        pasteListF = open(db_path+'.pastes', 'w')
+        pasteListF = open(db_path+'.'+hash_it(dbfile), 'w')
         pasteListF.write(json.dumps(pasteList))
         pasteListF.close()
     except:
-        print "unable to write to .pastes"
+        print "unable to write to ."+hash_it(dbfile)
 
     return 1
 
-def deletePasteObject(pasteID, db_path):
+def deletePasteObject(pasteID, db_path, dbfile):
     try:
-        remove_paste_from_db(pasteID, db_path)
+        remove_paste_from_db(pasteID, db_path, dbfile)
         delete_paste(pasteID, db_path)
         return 1
     except:
         return 0
 
-def retrievePasteObject(pasteID, db_path):
+def retrievePasteObject(pasteID, db_path, dbfile):
     try:
         pdata = open(db_path+pasteID, 'rb')
         data = pdata.read()
         pdata.close()
-        remove_paste_from_db(pasteID, db_path)
+        remove_paste_from_db(pasteID, db_path, dbfile)
         return data
     except:
         return 0
 
 
-def remove_paste_from_db(pasteID, db_path):
+def remove_paste_from_db(pasteID, db_path, dbfile):
     try:
-        pasteListF = open(db_path+'.pastes', 'r')
+        pasteListF = open(db_path+'.'+hash_it(dbfile), 'r')
         pasteListS = pasteListF.read()
         pasteListF.close()
         pasteList = json.loads(pasteListS)
     except:
-        print "unable to open .pastes"
+        print "unable to open ."+hash_it(dbfile)
         return 0
 
     for p in pasteList:
@@ -92,22 +99,22 @@ def remove_paste_from_db(pasteID, db_path):
             pasteList.remove(p)
 
     try:
-        pasteListF = open(db_path+'.pastes', 'w')
+        pasteListF = open(db_path+'.'+hash_it(dbfile), 'w')
         pasteListF.write(json.dumps(pasteList))
         pasteListF.close()
     except:
-        print "unable to write to .pastes"
+        print "unable to write to ."+hash_it(dbfile)
 
     return 1
 
-def getPasteList(db_path):
+def getPasteList(db_path, dbfile):
     try:
-        pasteListF = open(db_path+'.pastes', 'r')
+        pasteListF = open(db_path+'.'+hash_it(dbfile), 'r')
         pasteListS = pasteListF.read()
         pasteListF.close()
 
         pasteList = json.loads(pasteListS)
         return pasteList
     except:
-        print "Unable to load paste list"
+        print "Unable to load ."+hash_it(dbfile)
         return []

@@ -64,33 +64,28 @@ Compile:
 
 
 Initial load-up / login options:
-Computer Name: Does nothing at present
-Dropbox Paste Folder Path: Full path to where you want your pastes stored. Can be a shared folder. (e.g. /Users/seankooyman/Dropbox/)
+Clipbox Password: Stores a 'password' that you can enter on the web / our mobile app to access your pastes
 Dropbox Public Folder Path: Full path to your Public Dropbox folder. Does not yet support subfolders. (e.g. /Users/seankooyman/Dropbox/Public/)
-Dropbox Public Folder URL: Public base URL for items in your public folder. Can be found by right clicking an item in your public folder, and clicking 'copy public link', but take off the file name! (e.g. http://dl.dropbox.com/u/4238738/)
+Dropbox ID: Your Dropbox ID. Can be found by right clicking an item in your public folder, and clicking 'copy public link', and extracting the number from the url! (e.g. http://dl.dropbox.com/u/4238738/stuff.txt, where 4238738 = your Dropbox ID)
 
 There are two versions, one for the Mac OSX and one for Windows XP or above.
 
 --------Windows Shortcuts----------
 **Main 3**
-- control + shift + c = Clipbox Copy (sends control + c to foremost window, sends as paste)
+- control + shift + c = Clipbox Copy (sends control + c to foremost window, sends as paste + puts a URL in your clipboard for you to share)
 - control + shift + v = Clipbox Paste (loads whatever your last clipbox copy was into your clipboard, sends control + v to foremost window)
 - control + shift + r = Recent Pastes (shows list of all pastes you have pending)
 
 **Mutations of Clipbox Copy**
-- control + shift + a = Public Copy (puts a URL in your clipboard for you to share)
-- control + shift + 3 = Grabs screenshot, stores in clipboard, then sends paste
-- control + shift + 4 = Grabs rectangular screenshot that you specify, stores in clipboard, sends paste
+- control + shift + 3 = Clipbox Full Screenie (Grabs screenshot, sends as paste + puts a URL in your clipboard for you to share)
+- control + shift + 4 = Clipbox Screenie (Grabs rectangular screenshot that you specify, sends as paste + puts a URL in your clipboard for you to share)
 - control + shift + 1 = Clipbox -Copy (sends as paste whatever your current clipboard contents are)
 - control + shift + x = Clipbox Cut (Same as Clipbox Copy, but with cut command instead)
 
 
 --------OSX Shortcuts----------
 **Main 3**
-- cmd + shift + c = Clipbox Copy (sends cmd + c to foremost window, sends as paste)
+- cmd + shift + c = Clipbox Copy (sends cmd + c to foremost window, sends as paste + puts a URL in your clipboard for you to share)
 - cmd + shift + v = Clipbox Paste (loads whatever your last clipbox copy was into your clipboard, sends cmd + v to foremost window)
 - cmd + shift + r = Recent Pastes (shows list of all pastes you have pending)
-
-**Mutations of Clipbox Copy**
-- cmd + shift + a = Public Copy (puts a URL in your clipboard for you to share)
-- cmd + shift + x = Grabs rectangular screenshot that you specify, stores in clipboard, sends PUBLIC paste
+- cmd + shift + x = Clipbox Screenie (Grabs rectangular screenshot that you specify, sends as paste + puts a URL in your clipboard for you to share)

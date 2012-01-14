@@ -46,7 +46,7 @@ import zipfile
 #import zlib #superfluous? If so, delete
 import screenshotRect
 from time import gmtime, strftime
-import base64
+import base64, md5
 
 import cb_API
 import cb_helper
@@ -60,7 +60,6 @@ tbmenustr = [] #contains the paste info in the menu
 tbitemcnt = 0
 tbitemtype = "text"
 name = ""
-db_path = ""
 db_public_path = ""
 db_public_url = ""
 lastPaste = ""
@@ -73,7 +72,6 @@ sshoty1 = 0
 sshotx2 = 0
 sshoty2 = 0
 
-settings['db_path'] = ""
 settings['db_public_path'] = ""
 settings['db_public_url'] = ""
 settings['name'] = ""
@@ -209,18 +207,13 @@ class LoginWin(wx.Dialog):
         icon1 = wx.Icon("images/clipboard.png", wx.BITMAP_TYPE_PNG)
         self.SetIcon(icon1)
         dbox_location = get_dropbox_location()
-        if settings['db_path'] == "":
-            if settings['os_version'] == 'osx':
-                settings['db_path'] = dbox_location + '/'
-            elif settings['os_version'] == 'win':
-                settings['db_path'] = dbox_location + '/'
         if settings['db_public_path'] == "":
             if settings['os_version'] == 'osx':
                 settings['db_public_path'] = dbox_location + '/Public/'
             elif settings['os_version'] == 'win':
                 settings['db_public_path'] = dbox_location + '\\Public\\'
         if settings['db_public_url'] == "":
-            settings['db_public_url'] = 'http://dl.dropbox.com/u/{YOUR_USERID_HERE}/'
+            settings['db_public_url'] = 'YOUR_USERID_HERE'
 
         self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
 
@@ -229,19 +222,15 @@ class LoginWin(wx.Dialog):
         self.Bind(wx.EVT_PAINT, self.OnEraseBackground)
 
 
-        self.stName = wx.StaticText(self, -1, 'Computer Name', pos=(465, 20))
+        self.stName = wx.StaticText(self, -1, 'Clipbox Password', pos=(465, 20))
         self.stName.SetForegroundColour((61,110,186))
         self.tbName = wx.TextCtrl(self, -1, pos=(465, 40))
-
-        self.stdb_path = wx.StaticText(self, -1, 'Dropbox Paste Folder Path', pos=(463, 70))
-        self.stdb_path.SetForegroundColour((61,110,186))
-        self.tbdb_path = wx.TextCtrl(self, -1, pos=(465, 90))
 
         self.stdb_public_path = wx.StaticText(self, -1, 'Dropbox Public Folder Path', pos=(463, 120))
         self.stdb_public_path.SetForegroundColour((61,110,186))
         self.tbdb_public_path = wx.TextCtrl(self, -1, pos=(465, 140))
 
-        self.stdb_public_url = wx.StaticText(self, -1, 'Dropbox Public Folder URL', pos=(463, 170))
+        self.stdb_public_url = wx.StaticText(self, -1, 'Dropbox ID', pos=(463, 170))
         self.stdb_public_url.SetForegroundColour((61,110,186))
         self.tbdb_public_url = wx.TextCtrl(self, -1, pos=(465, 190))
 
@@ -249,12 +238,10 @@ class LoginWin(wx.Dialog):
 
         if settings['os_version'] == 'win':
             self.stName.SetBackgroundColour('#FAFAF6')
-            self.stdb_path.SetBackgroundColour('#FAFAF6')
             self.stdb_public_path.SetBackgroundColour('#FAFAF6')
             self.stdb_public_url.SetBackgroundColour('#FAFAF6')
 
         self.tbName.SetValue(settings['name'])
-        self.tbdb_path.SetValue(settings['db_path'])
         self.tbdb_public_path.SetValue(settings['db_public_path'])
         self.tbdb_public_url.SetValue(settings['db_public_url'])
 
@@ -269,28 +256,21 @@ class LoginWin(wx.Dialog):
     def submitInfo(self, event):
         global settings
 
-        if not os.path.isdir(self.tbdb_path.GetValue()):
+        if not os.path.isdir(self.tbdb_public_path.GetValue()):
             #invalid directory. Show error somehow.
             pass
         else:
             self.Show(False)
             settings['name'] = self.tbName.GetValue()
-            settings['db_path'] = self.tbdb_path.GetValue()
             settings['db_public_path'] = self.tbdb_public_path.GetValue()
             settings['db_public_url'] = self.tbdb_public_url.GetValue()
 
             if settings['os_version'] == 'osx':
-                if settings['db_path'][-1:] != '/':
-                    settings['db_path'] = settings['db_path'] + '/'
                 if settings['db_public_path'][-1:] != '/':
                     settings['db_public_path'] = settings['db_public_path'] + '/'
             elif settings['os_version'] == 'win':
-                if settings['db_path'][-1:] != '\\':
-                    settings['db_path'] = settings['db_path'] + '\\'
                 if settings['db_public_path'][-1:] != '\\':
                     settings['db_public_path'] = settings['db_public_path'] + '\\'
-            if settings['db_public_url'][-1:] != '/':
-                settings['db_public_url'] = settings['db_public_url'] + '/'
 
             saveMyInfo(self)
             self.EndModal(True)
@@ -303,17 +283,16 @@ def loadMyInfo(self):
         spdatafile.close()
         data = json.loads(jsoncode)
     except:
-        jsoncode = json.dumps({'name': '', 'db_path': '', 'db_public_path': '', 'db_public_url': ''})
+        jsoncode = json.dumps({'name': '', 'db_public_path': '', 'db_public_url': ''})
         data = json.loads(jsoncode)
     settings['name'] = data['name']
-    settings['db_path'] = data['db_path']
     settings['db_public_path'] = data['db_public_path']
     settings['db_public_url'] = data['db_public_url']
 
 def saveMyInfo(self):
     global settings
     try:
-        jsoncode = json.dumps({'name': settings['name'], 'db_path': settings['db_path'], 'db_public_path': settings['db_public_path'], 'db_public_url': settings['db_public_url']})
+        jsoncode = json.dumps({'name': settings['name'], 'db_public_path': settings['db_public_path'], 'db_public_url': settings['db_public_url']})
         spdatafile = open('.spdata', 'w')
         spdatafile.write(jsoncode)
         spdatafile.close()
@@ -367,11 +346,6 @@ class MyTaskBarIcon(wx.TaskBarIcon):
         tempitem = tbmenu.Append(-1,"X")                                   #'hack' to get images to work
         tempitem.SetBitmap(wx.Bitmap("images/file_icon_50.png"))             # 'hack' to get images to work
         mip = wx.MenuItem(tbmenu, 20, 'ClipBox Copy')
-        font = mip.GetFont()
-        font.SetWeight(wx.BOLD)
-        mip.SetFont(font)
-        tbmenu.AppendItem(mip)
-        mip = wx.MenuItem(tbmenu, 21, 'ClipBox Public Copy')
         font = mip.GetFont()
         font.SetWeight(wx.BOLD)
         mip.SetFont(font)
@@ -530,7 +504,7 @@ class pastePanel(wx.Panel):
     #Updates paste list with new ones
     def updatePastes(self, evt=None):
         global pastelistglob, lastPaste, settings
-        apiPastes = cb_API.getPasteList(settings['db_path']+'.clipbox/')
+        apiPastes = cb_API.getPasteList(settings['db_public_path']+'.clipbox/', settings['name'])
         total = 0
         popuptype = ""
         pasteIDS = []
@@ -601,11 +575,13 @@ class pastePanel(wx.Panel):
                 self.lcp.SetItemData(index, self.pastedictc)
                 self.pastedictc = self.pastedictc + 1
                 pastelistglob.append((onestring, twostring, singPaste['id'].strip(), singPaste['time'], singPaste['type']))
+        '''
         if totalnewpastes > 1:
             clipboxWindow.toasterWindow.RunToaster(str(totalnewpastes)+" new pastes.", popuptype)
         elif totalnewpastes == 1:
             if pasteIDS[-1].strip() != lastPaste:
                 clipboxWindow.toasterWindow.RunToaster("New paste.", popuptype)
+        '''
         #cycle through pastes currently in list - delete ones that are gone from the server
         #this is necessary in the event they retrieve the paste elsewhere
         totitems = self.lcp.GetItemCount()
@@ -640,6 +616,8 @@ class pastePanel(wx.Panel):
 
     def cleanTemp(self):
         i = 0
+        if not os.path.exists("temp"):
+            os.makedirs("temp")
         for filename in os.listdir("temp"):
             if i > 3:
                 break #only delete 3 at a time, max, to reduce lag
@@ -672,9 +650,7 @@ def DeletePaste(event):
             cnt = cnt + 1
         if not os.path.exists(settings['db_public_path'] + '.clipbox/'):
             os.makedirs(settings['db_public_path'] + '.clipbox/')
-        if not os.path.exists(settings['db_path'] + '.clipbox/'):
-            os.makedirs(settings['db_path'] + '.clipbox/')
-        cb_API.deletePasteObject(pasteID, settings['db_path']+'.clipbox/')
+        cb_API.deletePasteObject(pasteID, settings['db_public_path']+'.clipbox/', settings['name'])
         saveTaskBarUpdates(tbitemcnt-1)
         clipboxWindow.pasteListWindow.page1.lcp.DeleteItem(index)
         clipboxWindow.pasteListWindow.page1.lcp.RefreshRows()
@@ -686,7 +662,6 @@ def updateCSV(tmp):
     tbmenustr = []
     tbmenustr.append(ctrlshiftv[3])
     tbmenustr.append(ctrlshiftv[4])
-
 
 def RetrievePaste(self, event=None, shortcut="no"):
     global clipboxWindow, pastelistglob, ctrlshiftv, settings
@@ -723,22 +698,20 @@ def RetrievePaste(self, event=None, shortcut="no"):
 
     if not os.path.exists(settings['db_public_path'] + '.clipbox/'):
         os.makedirs(settings['db_public_path'] + '.clipbox/')
-    if not os.path.exists(settings['db_path'] + '.clipbox/'):
-        os.makedirs(settings['db_path'] + '.clipbox/')
     if pasteType != "":
         if pasteType=='text' or pasteType =='Text' :
-            txtdata = cb_API.retrievePasteObject(pasteID, settings['db_path']+'.clipbox/')
+            txtdata = cb_API.retrievePasteObject(pasteID, settings['db_public_path']+'.clipbox/', settings['name'])
             td = wx.TextDataObject()
             td.SetText(txtdata)
             if wx.TheClipboard.Open():
                 successt = wx.TheClipboard.SetData(td)
                 wx.TheClipboard.Close()
-            cb_API.delete_paste(pasteID, settings['db_path']+'.clipbox/')
+            cb_API.delete_paste(pasteID, settings['db_public_path']+'.clipbox/')
         if pasteType=='file' or pasteType =='File' :
             fileName = fname
             fd = wx.FileDataObject()
-            inputFData = cb_API.retrievePasteObject(pasteID, settings['db_path']+'.clipbox/')
-            fullfile = settings['db_path'] + pasteID
+            inputFData = cb_API.retrievePasteObject(pasteID, settings['db_public_path']+'.clipbox/', settings['name'])
+            fullfile = settings['db_public_path'] + pasteID
             #need to make sure file pastes with proper name... this is inefficient. Find a better way.
             try:
                 os.makedirs('temp')
@@ -751,16 +724,16 @@ def RetrievePaste(self, event=None, shortcut="no"):
             if wx.TheClipboard.Open():
                 successf = wx.TheClipboard.SetData(fd)
                 wx.TheClipboard.Close()
-            cb_API.delete_paste(pasteID, settings['db_path']+'.clipbox/')
+            cb_API.delete_paste(pasteID, settings['db_public_path']+'.clipbox/')
         if pasteType=='image' or pasteType =='Image' :
-            inputFData = cb_API.retrievePasteObject(pasteID, settings['db_path']+'.clipbox/')
+            inputFData = cb_API.retrievePasteObject(pasteID, settings['db_public_path']+'.clipbox/', settings['name'])
             bd = wx.BitmapDataObject()
-            bimg = wx.Bitmap(settings['db_path']+'.clipbox/'+pasteID, wx.BITMAP_TYPE_PNG)
+            bimg = wx.Bitmap(settings['db_public_path']+'.clipbox/'+pasteID, wx.BITMAP_TYPE_PNG)
             bimgsucc = bd.SetBitmap(bimg)
             if wx.TheClipboard.Open():
                 successb = wx.TheClipboard.SetData(bd)
                 wx.TheClipboard.Close()
-            cb_API.delete_paste(pasteID, settings['db_path']+'.clipbox/')
+            cb_API.delete_paste(pasteID, settings['db_public_path']+'.clipbox/')
         if shortcut == "no": #from window
             clipboxWindow.toasterWindow.RunToaster('Paste retrieved and loaded. Control+V will now paste it', pasteType)
             saveTaskBarUpdates(tbitemcnt-1, pasteType)
@@ -1036,7 +1009,6 @@ class mainFrame(wx.Frame, wx.lib.mixins.listctrl.ColumnSorterMixin):
             ftext = ''.join(fd.GetFilenames())
             bimg = bd.GetBitmap() #this is a wx.Bitmap
             pasteText = text
-        tmpPasteName = strftime("%Y-%m-%d_%H-%M-%S", gmtime())+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(6))
 
         #on OSX, in a file copy, both these variables are true
         if successt and successf:
@@ -1046,8 +1018,7 @@ class mainFrame(wx.Frame, wx.lib.mixins.listctrl.ColumnSorterMixin):
         self.Show(False)
         if not os.path.exists(settings['db_public_path'] + '.clipbox/'):
             os.makedirs(settings['db_public_path'] + '.clipbox/')
-        if not os.path.exists(settings['db_path'] + '.clipbox/'):
-            os.makedirs(settings['db_path'] + '.clipbox/')
+            
         if successt:
             appd = ""
             if len(pasteText) > 20:
@@ -1056,137 +1027,84 @@ class mainFrame(wx.Frame, wx.lib.mixins.listctrl.ColumnSorterMixin):
             if len(pasteText) > 20:
                 meta = meta + "..."
             meta = meta + " ("+str(len(pasteText))+" chars)"
-            if type == 'Private':
-                pasteID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(6)) #6 should be good, eh?
+            pasteID = strftime("%Y-%m-%d_%H-%M-%S", gmtime())+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(6))
 
-                result = cb_API.add_paste_to_db('text', meta, pasteID, settings['db_path']+'.clipbox/')
-                try:
-                    datafo = open(settings['db_path']+'.clipbox/'+pasteID, 'w')
-                    datafo.write(pasteText)
-                    datafo.close()
-                except:
-                    pass
-                clipboxWindow.toasterWindow.RunToaster('Paste Sent', 'text')
-                lastPaste = pasteID
-            else: #Public
-                fname = tmpPasteName
-                fexists = os.path.isfile(settings['db_public_path'] + '.clipbox/' + fname)
-                if fexists == True:
-                    #fname = fname + '_' + ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(6))
-                    os.remove(settings['db_public_path'] + '.clipbox/' + fname) #remove old file
-                try:
-                    datafo = open(settings['db_public_path'] + '.clipbox/'+fname, 'w')
-                    datafo.write(pasteText)
-                    datafo.close()
-
-                    public_paste_url = settings['db_public_url'] + '.clipbox/'+fname
-                    clipboxWindow.toasterWindow.RunToaster('Download URL copied to your Clipboard!', 'text')
-                    td = wx.TextDataObject()
-                    td.SetText(public_paste_url)
-                    if wx.TheClipboard.Open():
-                        successt = wx.TheClipboard.SetData(td)
-                        wx.TheClipboard.Close()
-                except:
-                    clipboxWindow.toasterWindow.RunToaster('An Error Occurred.', 'text')
-
+            result = cb_API.add_paste_to_db('text', meta, pasteID, settings['db_public_path']+'.clipbox/', settings['name'])
+            try:
+                datafo = open(settings['db_public_path']+'.clipbox/'+pasteID, 'w')
+                datafo.write(pasteText)
+                datafo.close()
+                public_paste_url = 'http://dl.dropbox.com/u/'+settings['db_public_url']+'/' + '.clipbox/'+pasteID
+                clipboxWindow.toasterWindow.RunToaster('Download URL copied to your Clipboard!', 'text')
+                td = wx.TextDataObject()
+                td.SetText(public_paste_url)
+                if wx.TheClipboard.Open():
+                    successt = wx.TheClipboard.SetData(td)
+                    wx.TheClipboard.Close()
+            except:
+                clipboxWindow.toasterWindow.RunToaster('An Error Occurred.', 'text')
+            lastPaste = pasteID
+                
         if successf:
             allFileNames = fd.GetFilenames()
             ftext = allFileNames[0]
-            if type == 'Private':
-                pasteID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(6)) #6 should be good, eh?
-                try:
-                    if len(allFileNames)>1:
-                        compression = zipfile.ZIP_DEFLATED
-                        zfname = settings['db_path']+'.clipbox/' + pasteID
-                        zf = zipfile.ZipFile(zfname, mode='w')
-                        try:
-                            for fnm in allFileNames:
-                                zf.write(str(fnm), os.path.basename(str(fnm)), compress_type=compression)
-                        finally:
-                            zf.close()
-                        fileloc = settings['db_path']+'.clipbox/' + pasteID
-                        fname = os.path.basename(ftext) + ".zip"
-                    else:
-                        shutil.copyfile(ftext, settings['db_path']+'.clipbox/'+pasteID)
-                        fname = os.path.basename(ftext)
+            pasteID =  os.path.basename(ftext)
+            #check through .pastes file, if pasteID already exists, overwrite it
+            try:
+                if len(allFileNames)>1:
+                    compression = zipfile.ZIP_DEFLATED
+                    zfname = settings['db_public_path']+'.clipbox/' + pasteID
+                    zf = zipfile.ZipFile(zfname, mode='w')
+                    try:
+                        for fnm in allFileNames:
+                            zf.write(str(fnm), os.path.basename(str(fnm)), compress_type=compression)
+                    finally:
+                        zf.close()
+                    fileloc = settings['db_public_path']+'.clipbox/' + pasteID
+                    fname = os.path.basename(ftext) + ".zip"
+                else:
+                    shutil.copyfile(ftext, settings['db_public_path']+'.clipbox/'+pasteID)
+                    fname = os.path.basename(ftext)
 
-                    size = convert_bytes(os.path.getsize(settings['db_path']+'.clipbox/' + pasteID))
-                    meta = fname + " ("+str(size)+")"
-                    result = cb_API.add_paste_to_db('file', meta, pasteID, settings['db_path']+'.clipbox/')
+                size = convert_bytes(os.path.getsize(settings['db_public_path']+'.clipbox/' + pasteID))
+                meta = fname + " ("+str(size)+")"
+                result = cb_API.add_paste_to_db('file', meta, pasteID, settings['db_public_path']+'.clipbox/', settings['name'])
 
-                except:
-                    pass
-                clipboxWindow.toasterWindow.RunToaster('Paste Sent', 'file')
-                lastPaste = pasteID
-            else: #Public
-                fname = os.path.basename(ftext)
-                fexists = os.path.isfile(settings['db_public_path'] + '.clipbox/' + fname)
-                if fexists == True:
-                    fname = fname + '_' + ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(6))
-                try:
-                    if len(allFileNames)>1:
-                        compression = zipfile.ZIP_DEFLATED
-                        zfname = settings['db_public_path'] + '.clipbox/'+fname
-                        zf = zipfile.ZipFile(zfname, mode='w')
-                        try:
-                            for fnm in allFileNames:
-                                zf.write(str(fnm), os.path.basename(str(fnm)), compress_type=compression)
-                        finally:
-                            zf.close()
-                        fileloc = settings['db_public_path'] + '.clipbox/'+fname
-                    else:
-                        fileloc = ftext
-                        shutil.copyfile(ftext, settings['db_public_path'] + '.clipbox/'+fname)
-
-                    size = convert_bytes(os.path.getsize(fileloc))
-                    meta = fname + " ("+str(size)+")"
-
-                    public_paste_url = settings['db_public_url'] + '.clipbox/'+fname
-
-                    clipboxWindow.toasterWindow.RunToaster('Download URL copied to your Clipboard!', 'file')
-                    td = wx.TextDataObject()
-                    td.SetText(public_paste_url)
-                    if wx.TheClipboard.Open():
-                        successt = wx.TheClipboard.SetData(td)
-                        wx.TheClipboard.Close()
-                except:
-                    clipboxWindow.toasterWindow.RunToaster('An Error Occurred.', 'file')
-
+                public_paste_url = 'http://dl.dropbox.com/u/'+settings['db_public_url']+'/' + '.clipbox/'+pasteID
+                td = wx.TextDataObject()
+                td.SetText(public_paste_url)
+                if wx.TheClipboard.Open():
+                    successt = wx.TheClipboard.SetData(td)
+                    wx.TheClipboard.Close()
+                clipboxWindow.toasterWindow.RunToaster('Download URL copied to your Clipboard!', 'file')
+            except:
+                clipboxWindow.toasterWindow.RunToaster('An Error Occurred.', 'file')
+                
+            lastPaste = pasteID
+                
         if successb:
             bmpimg = wx.ImageFromBitmap(bimg)
             width = bmpimg.GetWidth()
             height = bmpimg.GetHeight()
+            tmpPasteName = strftime("%Y-%m-%d_%H-%M-%S", gmtime())+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(6))
             bimg.SaveFile('temp/'+tmpPasteName+'.png', wx.BITMAP_TYPE_PNG)
             fullpath = os.getcwd() + "/temp/"+tmpPasteName+".png"
             size = convert_bytes(os.path.getsize('temp/'+tmpPasteName+'.png'))
             meta = str(width)+"x"+str(height)+" pixels ("+str(size)+")"
-            if type == 'Private':
-                pasteID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(6)) #6 should be good, eh?
-
-                result = cb_API.add_paste_to_db('image', meta, pasteID, settings['db_path']+'.clipbox/')
-                try:
-                    shutil.copyfile(fullpath, settings['db_path']+'.clipbox/'+pasteID)
-                except:
-                    pass
-                clipboxWindow.toasterWindow.RunToaster('Paste Sent', 'image')
-                lastPaste = pasteID
-            else: #Public
-                fname = os.path.basename(fullpath)
-                fexists = os.path.isfile(settings['db_public_path'] + '.clipbox/' + fname)
-                if fexists == True:
-                    fname = fname + '_' + ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(6))
-                try:
-                    shutil.copyfile(fullpath, settings['db_public_path'] + '.clipbox/'+fname)
-
-                    public_paste_url = settings['db_public_url'] + '.clipbox/'+fname
-                    clipboxWindow.toasterWindow.RunToaster('Download URL copied to your Clipboard!', 'image')
-                    td = wx.TextDataObject()
-                    td.SetText(public_paste_url)
-                    if wx.TheClipboard.Open():
-                        successt = wx.TheClipboard.SetData(td)
-                        wx.TheClipboard.Close()
-                except:
-                    clipboxWindow.toasterWindow.RunToaster('An Error Occurred.', 'image')
+            pasteID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(6)) + '_' + os.path.basename(fullpath)
+            result = cb_API.add_paste_to_db('image', meta, pasteID, settings['db_public_path']+'.clipbox/', settings['name'])
+            try:
+                shutil.copyfile(fullpath, settings['db_public_path']+'.clipbox/'+pasteID)
+                public_paste_url = 'http://dl.dropbox.com/u/'+settings['db_public_url']+'/' + '.clipbox/'+pasteID
+                td = wx.TextDataObject()
+                td.SetText(public_paste_url)
+                if wx.TheClipboard.Open():
+                    successt = wx.TheClipboard.SetData(td)
+                    wx.TheClipboard.Close()
+                clipboxWindow.toasterWindow.RunToaster('Download URL copied to your Clipboard!', 'image')
+            except:
+                clipboxWindow.toasterWindow.RunToaster('An Error Occurred.', 'image')
+            lastPaste = pasteID 
 
     def GetSortImages(self):
         return (self.dn, self.up)
@@ -1208,6 +1126,7 @@ def saveTaskBarUpdates(newtbcnt=-1, newtbtype=""):
         if(total > 9):
             total = 10
         #white (text) blue (images) yellow (files)
+        '''
         myimage = wx.Bitmap('images/spsprite.png', wx.BITMAP_TYPE_PNG)
         xcoor = 0
         ycoor = 0
@@ -1222,6 +1141,7 @@ def saveTaskBarUpdates(newtbcnt=-1, newtbtype=""):
         myicon = wx.EmptyIcon()
         myicon.CopyFromBitmap(submyimage)
         clipboxWindow.tskic.SetIcon(myicon, 'ClipBox')
+        '''
 
 def convert_bytes(bytes):
     bytes = float(bytes)
@@ -1251,9 +1171,9 @@ class MyApp(wx.App):
         loadMyInfo(self)
 
         forcelogin = 0
-        if settings['db_path'] != '':
+        if settings['db_public_path'] != '':
             try:
-                if not os.path.isdir(settings['db_path']):
+                if not os.path.isdir(settings['db_public_path']):
                     forcelogin = 1
                 else:
                     clipboxWindow = mainFrame(None, -1, 'ClipBox')
