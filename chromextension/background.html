@@ -1,0 +1,12 @@
+    <html>
+    <script>
+    function copyme(text)
+    {
+        document.getElementById('copyme').value=text;
+        document.getElementById('copyme').select();
+        document.execCommand('copy');
+    }
+    </script>
+    
+    <input type='text' id='copyme'>
+    </html>

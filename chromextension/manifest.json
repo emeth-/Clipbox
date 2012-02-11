@@ -1,0 +1,11 @@
+{
+    "name": "Clipbox",
+    "version": "1.0",
+    "description": "A world of connected clipboards",
+    "background_page": "background.html",
+    "browser_action": {
+        "default_icon": "icon.png",
+        "popup": "popup.html"
+    },
+    "permissions": [ "clipboardRead", "clipboardWrite" ]
+}
