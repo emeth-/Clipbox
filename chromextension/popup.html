@@ -11,25 +11,57 @@
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
     }
+    var totElements = 0;
     function clipbox(data)
     {
+        totElements = 0;
         /*
          data = [{"meta": "for p in pasteL... (248 chars)", "type": "text", "id": "2012-01-14_17-20-18OZJU83", "time": 1326561618},
                     {"meta": "217x111 pixels (5.0K)", "type": "image", "id": "AZPQU0_2012-01-14_17-20-35AWVVBV.png", "time": 1326561635}]
         */
         tbodyHtml = "";
-        for (d in data)
+        
+        data.sort(function(a, b) {
+            return parseInt(b['time']) - parseInt(a['time']);
+        });
+        
+        
+        for(var d=0; d<data.length; d++)
         {
-            var retURL = "http://dl.dropbox.com/u/"+document.getElementById('dbid').value+"/.clipbox/"+data[d]['id'];
-            tbodyHtml += "<tr><td>"+data[d]['type']+"</td><td>"+data[d]['id']+"</td><td>"+htmlEscape(data[d]['meta'])+"</td><td>"+data[d]['time']+"</td><td><a target='_blank' onclick='copy(\""+retURL+"\");return false;' href=''>Copy URL</a></td><td><a target='_blank' href='"+retURL+"'>View</a></td></tr>";
+            totElements += 1;
+            var hidestyle = "";
+            if(d > 10)
+            {
+                hidestyle = " style='visibility:false;'";
+            }
+            var retURL = "http://dl.dropbox.com/u/"+localStorage['user']+"/.clipbox/"+data[d]['id'];
+            //<td>"+data[d]['id']+"</td>
+            
+            tbodyHtml += "<tr id='rowid_"+totElements+"' "+hidestyle+"><td>"+data[d]['type']+"</td><td>"+htmlEscape(data[d]['meta'])+"</td><td>"+get_time(data[d]['time'])+"</td><td><a target='_blank' onclick='copy(\""+retURL+"\");return false;' href=''>Copy URL</a></td><td><a target='_blank' href='"+retURL+"'>View</a></td></tr>";
         }
         document.getElementById('plist').innerHTML = tbodyHtml;
+    }
+    
+    function get_time(unix_timestamp)
+    {
+        var date = new Date(unix_timestamp*1000);
+        return date.toLocaleDateString() + "<br />" + date.toLocaleTimeString();
+    }
+    
+    function showmore()
+    {
+        document.getElementById('showmemore').style.display = "none";
+        for (var i=1; i <= totElements; i++)
+        {
+            document.getElementById('rowid_'+i).style.visibility = "true";
+        }
     }
     function doit()
     {
         //login
         var url = "http://dl.dropbox.com/u/"+document.getElementById('dbid').value+"/.clipbox/."+md5('Royale.'+document.getElementById('password').value);
         localStorage['authurl'] = url;
+        localStorage['user'] = document.getElementById('dbid').value;
         load_db_js(url);
     }
     function load_db_js(url)
@@ -60,17 +92,18 @@
     </script>
 </head>
 <body onload='check_for_login()'>
-Password: <input type='password' id='password' value='blue42'><br />
-Dropbox ID: <input type='text' id='dbid' value='4238738'><br />
+Password: <input type='password' id='password' value=''><br />
+Dropbox ID: <input type='text' id='dbid' value=''><br />
 <input type='button' onclick='doit()' value='submit'><br /><br />
     <span id='msg'></span>
-    <table>
+    <table width="600">
         <thead>
-              <tr><th>Type</th><th>ID</th><th>Meta</th><th>Time</th><th>URL</th><th>Retrieve</th></tr>
+              <tr><th>Type</th><th>Meta</th><th>Time</th><th>URL</th><th>Retrieve&nbsp;&nbsp;&nbsp;&nbsp;</th></tr>
         </thead>
         <tbody id='plist'>
             
         </tbody>
     </table>
+    <span id='showmemore' style='display:block'><a href='#' onclick='showmore();return false;'>&gt;Show more</a></span>
 </body>
 </html>
