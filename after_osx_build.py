@@ -1,8 +1,14 @@
 import os
 
-#os.system('mkdir dist/clipbox.app/Contents/Resources/temp/')
-#os.system('mkdir dist/clipbox.app/Contents/Resources/images/')
-#os.system('cp -rf copy_to_app/images/ dist/clipbox.app/Contents/Resources/images/')
+def check_if_exists(before):
+    for line in before.split('\n'):
+        if '<LSUIElement>' in line:
+            return True
+    return False
+
+os.system('mkdir dist/clipbox.app/Contents/Resources/temp/')
+os.system('mkdir dist/clipbox.app/Contents/Resources/images/')
+os.system('cp -rf copy_to_app/images/ dist/clipbox.app/Contents/Resources/images/')
 
 x = open('dist/clipbox.app/Contents/Info.plist', 'r')
 before = x.read()
@@ -20,15 +26,8 @@ if not check_if_exists(before):
             inserted = 1
         after.append(line)
         
-    print '\n'.join(after)
-
     x = open('dist/clipbox.app/Contents/Info.plist', 'w')
     x.write('\n'.join(after))
     x.close()
 
-
-def check_if_exists(before):
-    for line in before.split('\n'):
-        if '<LSUIElement>' in line:
-            return True
-    return False
+print "Changes made to .app file."
