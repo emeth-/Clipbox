@@ -33,8 +33,6 @@ import json
 import wx, re, sys, glob, random, urllib2, Image, urllib
 import os,stat
 import time
-import wx.lib.mixins.listctrl as listmix  #listctrl add-ons
-import UltimateListCtrl as ULC #greatly expands what we can do with listctrls
 import httplib, mimetypes #fun internet stuffs
 import toasterbox #popup in lower right for new pastes
 from datetime import datetime
