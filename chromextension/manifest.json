@@ -1,6 +1,6 @@
 {
     "name": "Clipbox",
-    "version": "1.0",
+    "version": "1.1",
     "description": "A world of connected clipboards",
     "background_page": "background.html",
     "browser_action": {

@@ -43,6 +43,32 @@ def delete_paste(pasteID, db_path):
     except:
         return 0
 
+def delete_all_pastes(db_path, dbfile):
+    #read database
+    try:
+        pasteListF = open(db_path+'.'+hash_it(dbfile), 'r')
+        pasteListS = pasteListF.read()[8:-2]
+        pasteListF.close()
+        pasteList = json.loads(pasteListS)
+    except:
+        print "unable to open ."+hash_it(dbfile)
+        return 0
+
+    for p in pasteList:
+        #delete paste files
+        try:
+            os.remove(db_path+p['id'])
+        except:
+            pass
+
+    #clear database
+    try:
+        pasteListF = open(db_path+'.'+hash_it(dbfile), 'w')
+        pasteListF.write('clipbox([]);')
+        pasteListF.close()
+    except:
+        print "unable to write to ."+hash_it(dbfile)
+
 def add_paste_to_db(ptype, meta, pasteID, db_path, dbfile):
     try:
         pasteListF = open(db_path+'.'+hash_it(dbfile), 'r')

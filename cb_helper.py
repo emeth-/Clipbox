@@ -172,7 +172,8 @@ if settings['os_version'] == "osx":
 
     def get_keycode(key):
         if key == "control_mod": #command
-            return wx.WXK_START
+            #return wx.WXK_START 
+            return wx.MOD_CONTROL 
         elif key == "shift_mod":
             return wx.MOD_SHIFT
         #NOT WORKING ALT
