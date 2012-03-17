@@ -55,7 +55,7 @@ settings['db_public_url'] = ""
 settings['name'] = ""
 
 
-class mainFrame(wx.Frame, wx.lib.mixins.listctrl.ColumnSorterMixin):
+class mainFrame(wx.Frame):
     global clipboxWindow, settings
     def __init__(self, parent, id, title):
         style = wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER
