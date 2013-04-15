@@ -45,7 +45,7 @@ $ python py2app.py py2app
 (notice for myself in the future - on my machine, use python2.7 for compile)
 $ python after_osx_build.py
 
-Then be sure to move the confix.txt to the root directory of the app and update it with your settings.
+Then be sure to move the config.txt to the root directory of the app and update it with your settings.
 
 ---WINDOWS---
 Libraries I Use:
@@ -60,7 +60,7 @@ C:/> python py2exe.py py2exe
 -Copy contents of 'copy_into_dist' folder into 'dist' folder
 -optional: If you edited/updated the NSIS script, you would run it now.
 
-Then be sure to move the confix.txt to the root directory of the app and update it with your settings.
+Then be sure to move the config.txt to the root directory of the app and update it with your settings.
 
 
 /****************************************************/
