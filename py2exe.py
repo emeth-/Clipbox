@@ -30,7 +30,7 @@ import py2exe
 py2exe_options = {"packages": "encodings"}
 
 setup(name="Clipbox",
-      version='0.1.0',
+      version='1.1.0',
       options = {"py2exe" : py2exe_options},
       description='A world of connected clipboards!',
       author='Seanybob',
@@ -38,9 +38,9 @@ setup(name="Clipbox",
                         {
                             "script": "clipbox.py",
                             "uac_info": "requireAdministrator",
-                            "icon_resources": [(1, "clipbox.ico")]
+                            "icon_resources": [(1, "images/clipbox.ico")]
                         }
                 ],
       data_files=[(".",
-                   ["clipbox.ico"])],
+                   ["images/clipbox.ico"])],
 )

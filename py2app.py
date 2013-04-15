@@ -39,7 +39,7 @@ OPTIONS = {"packages": "wx", "iconfile":"images/clipboard.icns", 'semi_standalon
 
 setup(
     app=APP,
-    version='0.1.0',
+    version='1.1.0',
     data_files=DATA_FILES,
     options={'py2app': OPTIONS},
 )

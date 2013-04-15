@@ -1,12 +1,18 @@
 /******************************************/
+/*************   Latest Binaries   ********/
+/******************************************/
+
+OSX:
+https://dl.dropboxusercontent.com/u/4238738/clipbox.app.zip
+
+WINDOWS:
+https://dl.dropboxusercontent.com/u/4238738/clipbox.exe.zip
+
+/******************************************/
 /*************   The Files   **************/
 /******************************************/
 
-
-
 clipbox.py - The bread and butter.
-
-cb_API.py - Some 'api' functions that interact with pastes. Should eventually either be consolidated into clipbox.py, or strip more of clipbox.py out into it.
 
 cb_helper.py - Some OS specific functions.
 
@@ -36,7 +42,10 @@ Python Imaging Library 1.1.7 Source Kit (http://effbot.org/downloads/Imaging-1.1
 
 Compile:
 $ python py2app.py py2app
+(notice for myself in the future - on my machine, use python2.7 for compile)
 $ python after_osx_build.py
+
+Then be sure to move the confix.txt to the root directory of the app and update it with your settings.
 
 ---WINDOWS---
 Libraries I Use:
@@ -51,27 +60,36 @@ C:/> python py2exe.py py2exe
 -Copy contents of 'copy_into_dist' folder into 'dist' folder
 -optional: If you edited/updated the NSIS script, you would run it now.
 
+Then be sure to move the confix.txt to the root directory of the app and update it with your settings.
 
 
 /****************************************************/
 /*************   Program Information   **************/
 /****************************************************/
 
-
-
-
-Initial load-up / login options:
-Clipbox Password: Stores a 'password' that you can enter on the web / our mobile app to access your pastes. Do NOT use your dropbox password.
-Dropbox Public Folder Path: Full path to your Public Dropbox folder. Does not yet support subfolders. (e.g. /Users/seankooyman/Dropbox/Public/)
-Dropbox ID: Your Dropbox ID. Can be found by right clicking an item in your public folder, and clicking 'copy public link', and extracting the number from the url! (e.g. http://dl.dropbox.com/u/4238738/stuff.txt, where 4238738 = your Dropbox ID)
-
-There are two versions, one for the Mac OSX and one for Windows XP or above.
-
 --------Windows Shortcuts----------
 - control + shift + c = Clipbox Copy (sends control + c to foremost window, sends as paste + puts a URL in your clipboard for you to share)
-- control + shift + x = Clipbox Screenie (Grabs rectangular screenshot that you specify, sends as paste + puts a URL in your clipboard for you to share)
+- control + shift + x = Clipbox Screenie (Grabs full desktop screenshot, sends as paste + puts a URL in your clipboard for you to share)
 
 
 --------OSX Shortcuts----------
 - cmd + shift + c = Clipbox Copy (sends cmd + c to foremost window, sends as paste + puts a URL in your clipboard for you to share)
 - cmd + shift + x = Clipbox Screenie (Grabs rectangular screenshot that you specify, sends as paste + puts a URL in your clipboard for you to share)
+
+--------Settings----------
+{
+    "ftp_host": "mywebsite.net",
+    "ftp_public_url": "http://mywebsite.net/",
+    "ftp_username": "bobdole",
+    "ftp_password": "p455w0rd",
+    "ftp_remote_dir":"public_html/",
+    "use_ftp": 1, //A flag used to tell the program whether to look for FTP credentials or Dropbox credentials
+}
+
+{
+    "db_public_path": "/Users/emeth/Dropbox/Public/", //Full path to your Public Dropbox folder. Does not yet support subfolders. (e.g. /Users/seankooyman/Dropbox/Public/)
+    "db_public_url": "4238738", //Your Dropbox ID. Can be found by right clicking an item in your public folder, and clicking 'copy public link', and extracting the number from the url! (e.g. http://dl.dropbox.com/u/4238738/stuff.txt, where 4238738 = your Dropbox ID)
+    "use_ftp": 0 //A flag used to tell the program whether to look for FTP credentials or Dropbox credentials
+}
+
+There are two versions, one for the Mac OSX and one for Windows XP or above.

@@ -1,4 +1,5 @@
 import os
+import shutil
 
 def check_if_exists(before):
     for line in before.split('\n'):
@@ -9,6 +10,10 @@ def check_if_exists(before):
 os.system('mkdir dist/clipbox.app/Contents/Resources/temp/')
 os.system('mkdir dist/clipbox.app/Contents/Resources/images/')
 os.system('cp -rf copy_to_app/images/ dist/clipbox.app/Contents/Resources/images/')
+
+shutil.copyfile('config-example-dropbox.txt', 'dist/clipbox.app/Contents/Resources/config-example-dropbox.txt')
+shutil.copyfile('config-example-ftp.txt', 'dist/clipbox.app/Contents/Resources/config-example-ftp.txt')
+shutil.copyfile('config-example-ftp.txt', 'dist/clipbox.app/Contents/Resources/config.txt')
 
 x = open('dist/clipbox.app/Contents/Info.plist', 'r')
 before = x.read()
