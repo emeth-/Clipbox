@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="shortcut icon" href="static/ico/favicon.ico">
+
+    <title>Clipbox Settings</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="static/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap theme -->
+    <link href="static/css/bootstrap-theme.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="static/css/theme.css" rel="stylesheet">
+
+    <!-- Just for debugging purposes. Don't actually copy this line! -->
+    <!--[if lt IE 9]><script src="static/js/ie8-responsive-file-warning.js"></script><![endif]-->
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body role="document">
+
+    <!-- Fixed navbar -->
+    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Clipbox Settings</a>
+        </div>
+        <div class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="#">Settings</a></li>
+            <!--
+            <li><a href="#about">About</a></li>
+            <li><a href="#contact">Contact</a></li>
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <b class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="#">Action</a></li>
+                <li><a href="#">Another action</a></li>
+                <li><a href="#">Something else here</a></li>
+                <li class="divider"></li>
+                <li class="dropdown-header">Nav header</li>
+                <li><a href="#">Separated link</a></li>
+                <li><a href="#">One more separated link</a></li>
+              </ul>
+            </li>
+            -->
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </div>
+
+    <div class="container theme-showcase" role="main">
+
+      <!-- Main jumbotron for a primary marketing message or call to action -->
+      <div class="jumbotron">
+        <h2>Settings: <button type="button" class="btn btn-lg btn-success" onclick="save()">SAVE AND EXIT</button></h2>
+      <div class="row">
+        <div class="col-sm-4">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Shortcuts</h3>
+            </div>
+            <div class="panel-body">
+                <script>
+                    function update_modifiers() {
+                        jQuery(".modifier_example").html(jQuery("#key_first_mod").val().split('_')[1]+"+"+jQuery("#key_second_mod").val().split('_')[1]+"+");
+                    }
+                </script>
+                First Modifier: <select name='key_first_mod' id='key_first_mod' class="collect_me" style="float:right;" onChange="update_modifiers()">
+                <option value='MOD_CMD' selected>CMD</option>
+                <option value='MOD_CONTROL'>Control</option>
+                <option value='MOD_ALT'>Alt</option>
+                <option value='MOD_SHIFT'>Shift</option>
+                </select><br><br>
+                Second Modifier: <select name='key_second_mod' id='key_second_mod' class="collect_me" style="float:right;" onChange="update_modifiers()">
+                <option value='MOD_CMD'>CMD</option>
+                <option value='MOD_CONTROL'>Control</option>
+                <option value='MOD_ALT'>Alt</option>
+                <option value='MOD_SHIFT' selected>Shift</option>
+                </select><br><hr>
+                Copy: <span style="float:right;"><span class='modifier_example'>CMD+SHIFT+</span><input type='text' name='key_copy' id='key_copy' value='C' class="collect_me" size='1' onblur="this.value=this.value.toUpperCase()"></span><br><br>
+                Screenshot: <span style="float:right;"><span class='modifier_example'>CMD+SHIFT+</span><input type='text' name='key_screenshot' id='key_screenshot' value='X' class="collect_me" size='1' onblur="this.value=this.value.toUpperCase()"></span><br><br>
+                <span style="font-size:10px">*Note - changes to your shortcuts won't appear until you restart the clipbox application (which occurs automatically when you reboot).</span>
+            </div>
+          </div>
+        </div><!-- /.col-sm-4 -->
+        <script>
+            function radio_toggled() {
+                var backend = jQuery('input[name=backend]:checked').val();
+                if(backend == "dropbox") {
+                    jQuery("#dropbox_panel").addClass("panel-success").removeClass("panel-danger");
+                    jQuery("#dropbox_panel").find("input[type='text']").css('color', "black").prop('disabled', false);
+                    
+                    jQuery("#ftp_panel").addClass("panel-danger").removeClass("panel-success");
+                    jQuery("#ftp_panel").find("input[type='text']").css('color', "grey").prop('disabled', true);
+                }
+                if(backend == "ftp") {
+                    jQuery("#ftp_panel").addClass("panel-success").removeClass("panel-danger");
+                    jQuery("#ftp_panel").find("input[type='text']").css('color', "black").prop('disabled', false);
+                    
+                    jQuery("#dropbox_panel").addClass("panel-danger").removeClass("panel-success");
+                    jQuery("#dropbox_panel").find("input[type='text']").css('color', "grey").prop('disabled', true);
+                }
+            }
+        </script>
+        <div class="col-sm-4">
+          <div class="panel panel-success" id="dropbox_panel">
+            <div class="panel-heading">
+              <h3 class="panel-title">Dropbox Backend <input type="radio" name="backend" id="backend_dropbox" value="dropbox" checked onclick="radio_toggled()"></h3>
+            </div>
+            <div class="panel-body">
+                Dropbox Public Local Path:<br> <input type='text' name='db_public_path' id='db_public_path' class="collect_me" value='/Users/bobdole/Dropbox/Public/' size=40><br><br>
+                Dropbox Userid:<br> <input type='text' name='db_public_url' id='db_public_url' class="collect_me" value='4238738' size=40><br>
+                <span style="font-size:10px">(e.g. https://dl.dropboxusercontent.com/u/<b>4238738</b>/hi.png)</span>
+            </div>
+          </div>
+        </div><!-- /.col-sm-4 -->
+        <div class="col-sm-4">
+          <div class="panel panel-danger" id="ftp_panel">
+            <div class="panel-heading">
+              <h3 class="panel-title">FTP Backend <input type="radio" name="backend" id="backend_ftp" value="ftp" onclick="radio_toggled()"></h3>
+            </div>
+            <div class="panel-body">
+                FTP Host:<br> <input type='text' name='ftp_host' id='ftp_host' class="collect_me" value='mywebsite.net' size=40><br>
+                FTP Username:<br> <input type='text' name='ftp_username' id='ftp_username' class="collect_me" value='bobdole' size=40><br>
+                FTP Password:<br> <input type='password' name='ftp_password' id='ftp_password' class="collect_me" value='p455w0rd' size=40><br>
+                FTP Remote Directory:<br> <input type='text' name='ftp_remote_dir' id='ftp_remote_dir' class="collect_me" value='public_html/clipbox/' size=40><br>
+                FTP HTTP URL (for above directory):<br> <input type='text' name='ftp_public_url' id='ftp_public_url' class="collect_me" value='http://mywebsite.net/clipbox/' size=40>
+            </div>
+          </div>
+        </div><!-- /.col-sm-4 -->
+      </div>
+      
+      </div>
+
+    </div> <!-- /container -->
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script src="static/js/bootstrap.min.js"></script>
+    <script>
+        function load_current_settings(data) {
+            //...
+            data = JSON.parse(data);
+            if(data['backend'] == "ftp")
+                $("#backend_ftp").prop("checked", true);
+            else 
+                $("#backend_dropbox").prop("checked", true);
+            delete data['backend'];
+            jQuery.each(data, function(k,v) {
+                jQuery("#"+k).val(v);
+            });
+            radio_toggled();
+        }
+        function save() {
+            var dataz = {};
+            jQuery('.collect_me').each(function(){
+                dataz[jQuery(this).attr('id')] = jQuery(this).val();
+            });
+            dataz['backend'] = jQuery("input[name=backend]:checked").val(); 
+            
+            jQuery.ajax({
+                type: "POST",
+                url: "/save",
+                dataType: "json",
+                data: {
+                    "data": JSON.stringify(dataz)
+                },
+                success: function(data) {
+                    console.log("success", data);
+                    window.close();
+                },
+                error: function (e) {
+                    console.log("error", e);
+                    alert("Error saving config.");
+                }
+            });
+        }
+        
+    </script>
+    <script src="settings.js"></script>
+  </body>
+</html>

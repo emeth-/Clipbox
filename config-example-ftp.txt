@@ -1,1 +1,0 @@
-{"ftp_host": "mywebsite.net", "ftp_public_url": "http://mywebsite.net/", "ftp_username": "bobdole", "ftp_password": "p455w0rd", "ftp_remote_dir":"public_html/", "use_ftp": 1}

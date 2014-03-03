@@ -1,68 +1,45 @@
-'''
- *  Copyright (c) 2011
- *  http://teachthe.net/?page_id=1657
- *  Originally developed by Sean Kooyman | teachthe.net(at)gmail.com
- *
- *  License:  GPL version 3.
- *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy
- *  of this software and associated documentation files (the "Software"), to deal
- *  in the Software without restriction, including without limitation the rights
- *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- *  copies of the Software, and to permit persons to whom the Software is
- *  furnished to do so, subject to the following conditions:
- *
- *  The above copyright notice and this permission notice shall be included in
- *  all copies or substantial portions of the Software.
-
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- *  THE SOFTWARE.
-'''
-import platform
-if platform.system() == 'Windows':
-    settings = {"os_version": "win"}
-else:
-    settings = {"os_version": "osx"}
 import json
-
-import wx, random, Image
+import wx
+import random
 import os
 import time
 import toasterbox #popup in lower right for new pastes
 import webbrowser #to open http links in user's preferred browser
 import shutil #to copy files to the sent directory
-import string
-import screenshotRect
-from time import gmtime, strftime
 
-import cb_helper
-
-import subprocess
-import sys
+#for the settings webserver UI (Yeah. I'd go this far just to avoid having to make a native GUI.)
+from bottle import route, run, static_file, request
+import thread
 
 from ftplib import FTP
-ftp_conn = None
 
-clipboxWindow = None
-weburl = "http://teachthe.net/?page_id=1657"
+settings = {
+    "backend": "ftp",
+    "ftp_host": "", #ftp backend
+    "ftp_public_url": "", #ftp backend
+    "ftp_username": "", #ftp backend
+    "ftp_password": "", #ftp backend
+    "ftp_remote_dir": "", #ftp backend
+    "db_public_path": "", #dropbox backend
+    "db_public_url": "", #dropbox backend
+    "key_first_mod": "MOD_CMD",
+    "key_second_mod": "MOD_SHIFT",
+    "key_copy": "C",
+    "key_screenshot": "X",
+}
 
-settings['use_ftp'] = 1
-settings['ftp_host'] = ""
-settings['ftp_public_url'] = ""
-settings['ftp_username'] = ""
-settings['ftp_password'] = ""
-settings['ftp_remote_dir'] = ""
-settings['db_public_path'] = ""
-settings['db_public_url'] = ""
-
+def load_settings():
+    global settings
+    try:
+        spdatafile = open('config.txt', 'r')
+        jsoncode = spdatafile.read()
+        spdatafile.close()
+        settings = json.loads(jsoncode)
+    except:
+        pass
 
 class mainFrame(wx.Frame):
-    global clipboxWindow, settings
+    global settings
     def __init__(self, parent, id, title):
         style = wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER
         self.window = wx.Frame.__init__(self, parent, id, title, size=(450,555), style=style)
@@ -71,7 +48,7 @@ class mainFrame(wx.Frame):
         self.Bind(wx.EVT_HOTKEY, self.handleHotKey, id=self.hotCopy)
         self.Bind(wx.EVT_HOTKEY, self.handleHotKey, id=self.hotScreenRect)
 
-        icon1 = wx.Icon("images/clipboard.png", wx.BITMAP_TYPE_PNG)
+        icon1 = wx.Icon("images/clipbox_icon.png", wx.BITMAP_TYPE_PNG)
         self.SetIcon(icon1)
 
         self.tskic = MyTaskBarIcon(self)
@@ -82,146 +59,107 @@ class mainFrame(wx.Frame):
         wx.GetApp().Bind(wx.EVT_END_SESSION, self.onFullClose)
         self.Bind(wx.EVT_CLOSE, self.onFullClose)
 
-        wx.CallAfter(self.createSubWindows)
+        wx.CallAfter(self.createToasterWindow)
+        wx.CallAfter(self.StartServer) 
         self.Layout()
+        
+    def checkSettings(self):
+        global settings
+        pop_settings_ui = False
+        if settings['backend'] == "ftp":
+            if settings['ftp_host'] == '' or settings['ftp_public_url'] == '' or settings['ftp_username'] == '' or settings['ftp_password'] == '':
+                pop_settings_ui = True
+        else:
+            if settings['db_public_path'] == '' or settings['db_public_url'] == '':
+                    pop_settings_ui = True
+            else:
+                if not os.path.isdir(settings['db_public_path']):
+                    pop_settings_ui = True
+        if pop_settings_ui:
+            webbrowser.open("http://localhost:8181/")
 
-    def createSubWindows(self):
+    def createToasterWindow(self):
         self.toasterWindow = ToasterBox(None, -1, 'ToasterBox')
 
     def onFullClose(self, event):
         for w in wx.GetTopLevelWindows():
             w.Destroy()
         self.Destroy()
+        
+    def StartServer(self): 
+        thread.start_new_thread(self._StartServe, ())
+        self.checkSettings()
+        
+    def _StartServe(self):
+        print "starting server thread..." 
+
+        @route('/settings.js', method='GET')
+        def settingsjs():
+            spdatafile = open('config.txt', 'r')
+            settings_data = spdatafile.read()
+            spdatafile.close()
+            return "load_current_settings("+json.dumps(settings_data)+");"
+
+        @route('/save', method='POST')
+        def save():
+            data = request.forms.get('data')
+            spdatafile = open('config.txt', 'w')
+            spdatafile.write(data)
+            spdatafile.close()
+            load_settings()
+            return json.dumps({"status":"success"})
+        
+        @route('/')
+        def base():
+            return static_file("index.html", root='./')
+        
+        @route('/static/:filename#.*#')
+        def send_static(filename):
+            return static_file(filename, root='./static/')
+
+        run(host='0.0.0.0', port=8181)
 
     def OnClose(self,event):
         self.Show(False)
         event.Veto()
 
     def regHotKey(self):
-        mod_control = cb_helper.get_keycode('control_mod')
-        mod_shift = cb_helper.get_keycode('shift_mod')
+        global settings
+
         self.hotCopy = 100
         self.RegisterHotKey(
-            self.hotCopy, 
-            mod_control | mod_shift, 
-            cb_helper.get_keycode('c')) 
+            self.hotCopy,
+            eval("wx."+settings['key_first_mod']) | eval("wx."+settings['key_second_mod']),
+            ord(settings['key_copy']))
 
         self.hotScreenRect = 104
         self.RegisterHotKey(
             self.hotScreenRect, #a unique ID for this hotkey
-            mod_control | mod_shift, #the modifier keys
-            cb_helper.get_keycode('x'))
+            eval("wx."+settings['key_first_mod']) | eval("wx."+settings['key_second_mod']),
+            ord(settings['key_screenshot']))
 
     def handleHotKey(self, evt):
         eventId = evt.GetId()
-        if eventId == 104: #hotScreenRect
-
-            if settings['os_version'] == 'osx':
-                cb_helper.send_key('screenshot')
-                self.onHotCopy()
-
-            elif settings['os_version'] == 'win':
-                """
-                #use print screen to put screen contents on clipboard - results in unsolvable clipboard in use bug :(
-                import ctypes
-                user32 = ctypes.windll.user32
-                keycode = int("0x2C", 16)
-                time.sleep(1)
-                user32.keybd_event(keycode,0,2,0) #is the code for KEYDOWN
-                time.sleep(1)
-                user32.keybd_event(keycode,0,0,0) #is the code for KEYDUP
-                
-                self.onHotCopy()
-                """
-                
-                """
-                # Take snapshot of desktop, allowing user to specify target area - results in unsolvable clipboard in use bug :(
-                ssdlg = screenshotRect.Screen_Capture(None)
-                ssdlg.ShowModal()
-                ssdlg.Raise()
-                x1 = min(ssdlg.c1.x, ssdlg.c2.x)
-                x2 = max(ssdlg.c1.x, ssdlg.c2.x)
-                y1 = min(ssdlg.c1.y, ssdlg.c2.y)
-                y2 = max(ssdlg.c1.y, ssdlg.c2.y)
-                captureBmapSize = (x2-x1, y2-y1)
-                #captureBmapSize = (wx.SystemSettings.GetMetric( wx.SYS_SCREEN_X ),
-                #wx.SystemSettings.GetMetric( wx.SYS_SCREEN_Y ) )
-                captureStartPos = (x1, y1)    # Arbitrary U-L position anywhere within the screen
-                scrDC = wx.ScreenDC()
-                scrDcSize = scrDC.Size
-                scrDcSizeX, scrDcSizeY = scrDcSize
-
-                # Cross-platform adaptations :
-                scrDcBmap     = scrDC.GetAsBitmap()
-                scrDcBmapSize = scrDcBmap.GetSize()
-
-                # Check if scrDC.GetAsBitmap() method has been implemented on this platform.
-                if   scrDcBmapSize == (0, 0) :      # Not implemented :  Get the screen bitmap the long way.
-
-                    scrDcBmap = wx.EmptyBitmap( *scrDcSize )
-                    scrDcBmapSizeX, scrDcBmapSizeY = scrDcSize
-
-                    memDC = wx.MemoryDC( scrDcBmap )
-
-                    memDC.Blit( 0, 0,                           # Copy to this start coordinate.
-                                scrDcBmapSizeX, scrDcBmapSizeY, # Copy an area this size.
-                                scrDC,                          # Copy from this DC's bitmap.
-                                0, 0,                    )      # Copy from this start coordinate.
-
-                    memDC.SelectObject( wx.NullBitmap )     # Finish using this wx.MemoryDC.
-                                                            # Release scrDcBmap for other uses.
-                else :
-                    scrDcBmap = scrDC.GetAsBitmap()     # So easy !  Copy the entire Desktop bitmap.
-
-                bitmap = scrDcBmap.GetSubBitmap( wx.RectPS( captureStartPos, captureBmapSize ) )
-                bitmap.SaveFile( 'temp/screenshot.png', wx.BITMAP_TYPE_PNG )
-
-                bd = wx.BitmapDataObject()
-                if wx.TheClipboard.Open():
-                    successb = wx.TheClipboard.SetData(bd)
-                    wx.TheClipboard.Close()
-                    
-                self.onHotCopy()
-                """
-                
-                from PIL import ImageGrab
-                im = ImageGrab.grab()
-                im.save('temp/screenshot.png', 'PNG')
-                self.file_paste('temp/screenshot.png', 'screenshot_'+strftime("%Y-%m-%d_%H-%M-%S", gmtime())+'.png')
-
-                
-        if eventId == 100: #hotCopy
-            cb_helper.wait_for_key_up('copy')
-            cb_helper.send_key('copy')
+        if eventId == self.hotScreenRect: 
+            os.system('screencapture -c -i') #allow user to draw rectangle screenshot, copy image to clipboard
+            self.onHotCopy()
+        if eventId == self.hotCopy: 
+            time.sleep(1)
+            os.system("""osascript -e 'tell application "System Events" to keystroke "c" using {command down}'""") #send copy command.
             time.sleep(1.5)
             self.onHotCopy()
-            
-    def file_paste(self, full_file_name, uploaded_name=""):
-        global settings
-        if uploaded_name == "":
-            uploaded_name = os.path.basename(full_file_name)
-        pasteID =  uploaded_name
-        try:
-            if settings['use_ftp'] == 1:
-                ftp_conn = FTP(settings['ftp_host'], settings['ftp_username'], settings['ftp_password'])
-                ftp_conn.storbinary('STOR '+settings['ftp_remote_dir']+pasteID, open(full_file_name, 'rb'))
-                public_paste_url = settings['ftp_public_url']+pasteID
-            else:
-                shutil.copyfile(full_file_name, settings['db_public_path']+'.clipbox/'+pasteID)
-                public_paste_url = 'http://dl.dropbox.com/u/'+settings['db_public_url']+'/' + '.clipbox/'+pasteID
-            
-            td = wx.TextDataObject()
-            td.SetText(public_paste_url)
-            if wx.TheClipboard.Open():
-                successt = wx.TheClipboard.SetData(td)
-                wx.TheClipboard.Close()
-            clipboxWindow.toasterWindow.RunToaster('Download URL copied to your Clipboard!', 'file')
-        except:
-            clipboxWindow.toasterWindow.RunToaster('An Error Occurred.', 'file')
 
+    def copyToClipboard(self, text):
+        td = wx.TextDataObject()
+        td.SetText(text)
+        if wx.TheClipboard.Open():
+            wx.TheClipboard.SetData(td)
+            wx.TheClipboard.Close()
+            return True
+        return False
+            
     def onHotCopy(self):
         global settings
-        cb_helper.catch_clipboard_in_use_bug()
         if wx.TheClipboard.Open():
             td = wx.TextDataObject()
             fd = wx.FileDataObject()
@@ -231,26 +169,36 @@ class mainFrame(wx.Frame):
             successb = wx.TheClipboard.GetData(bd)
             wx.TheClipboard.Close()
             text = td.GetText()
-            ftext = ''.join(fd.GetFilenames())
             bimg = bd.GetBitmap() #this is a wx.Bitmap
             pasteText = text
 
-        #on OSX, in a file 'copy' event, both these variables are true
-        if successt and successf:
-            successt = False
-            successb = False
-
         self.Show(False)
-        if settings['use_ftp'] == 0:
+        if settings['backend'] == "dropbox":
             #if clipbox dropbox folder doesn't exist, create it
             if not os.path.exists(settings['db_public_path'] + '.clipbox/'):
                 os.makedirs(settings['db_public_path'] + '.clipbox/')
-            
-        if successt:
-            pasteID = strftime("%Y-%m-%d_%H-%M-%S", gmtime())+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(6))
 
+        if successf:
+            allFileNames = fd.GetFilenames()
+            pasteID =  os.path.basename(allFileNames[0])
             try:
-                if settings['use_ftp'] == 1:
+                if settings['backend'] == "ftp":
+                    ftp_conn = FTP(settings['ftp_host'], settings['ftp_username'], settings['ftp_password'])
+                    ftp_conn.storbinary('STOR '+settings['ftp_remote_dir']+pasteID, open(allFileNames[0], 'rb'))
+                    public_paste_url = settings['ftp_public_url']+pasteID
+                else:
+                    shutil.copyfile(allFileNames[0], settings['db_public_path']+'.clipbox/'+pasteID)
+                    public_paste_url = 'http://dl.dropbox.com/u/'+settings['db_public_url']+'/' + '.clipbox/'+pasteID
+    
+                self.copyToClipboard(public_paste_url)
+                self.toasterWindow.RunToaster('Download URL copied to your Clipboard!', 'file')
+            except:
+                self.toasterWindow.RunToaster('An Error Occurred.', 'file')
+        elif successt:
+            
+            pasteID = time.strftime("%Y-%m-%d_%H-%M-%S", time.gmtime())+''.join(random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') for x in range(6))
+            try:
+                if settings['backend'] == "ftp":
                     tmpf = open("tmptxt", 'w')
                     tmpf.write(pasteText)
                     tmpf.close()
@@ -262,27 +210,17 @@ class mainFrame(wx.Frame):
                     datafo.write(pasteText)
                     datafo.close()
                     public_paste_url = 'http://dl.dropbox.com/u/'+settings['db_public_url']+'/' + '.clipbox/'+pasteID
-                
-                clipboxWindow.toasterWindow.RunToaster('Download URL copied to your Clipboard!', 'text')
-                td = wx.TextDataObject()
-                td.SetText(public_paste_url)
-                if wx.TheClipboard.Open():
-                    successt = wx.TheClipboard.SetData(td)
-                    wx.TheClipboard.Close()
+
+                self.copyToClipboard(public_paste_url)
+                self.toasterWindow.RunToaster('Download URL copied to your Clipboard!', 'text')
             except:
-                clipboxWindow.toasterWindow.RunToaster('An Error Occurred.', 'text')
-                
-        if successf:
-            allFileNames = fd.GetFilenames()
-            self.file_paste(allFileNames[0])
-                
-        if successb:
-            tmpPasteName = strftime("%Y-%m-%d_%H-%M-%S", gmtime())+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(6))
-            bimg.SaveFile('temp/'+tmpPasteName+'.png', wx.BITMAP_TYPE_PNG)
-            fullpath = os.getcwd() + "/temp/"+tmpPasteName+".png"
-            pasteID = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(6)) + '_' + os.path.basename(fullpath)
+                self.toasterWindow.RunToaster('An Error Occurred.', 'text')
+        elif successb:
+            pasteID = time.strftime("%Y-%m-%d_%H-%M-%S", time.gmtime())+''.join(random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') for x in range(6))+".png"
+            bimg.SaveFile('temp/'+pasteID, wx.BITMAP_TYPE_PNG)
+            fullpath = os.getcwd() + "/temp/"+pasteID
             try:
-                if settings['use_ftp'] == 1:
+                if settings['backend'] == "ftp":
                     ftp_conn = FTP(settings['ftp_host'], settings['ftp_username'], settings['ftp_password'])
                     ftp_conn.storbinary('STOR '+settings['ftp_remote_dir']+pasteID, open(fullpath, 'rb'))
                     public_paste_url = settings['ftp_public_url']+pasteID
@@ -294,57 +232,48 @@ class mainFrame(wx.Frame):
                 if wx.TheClipboard.Open():
                     successt = wx.TheClipboard.SetData(td)
                     wx.TheClipboard.Close()
-                clipboxWindow.toasterWindow.RunToaster('Download URL copied to your Clipboard!', 'image')
+                self.toasterWindow.RunToaster('Download URL copied to your Clipboard!', 'image')
             except ImportWarning:
-                clipboxWindow.toasterWindow.RunToaster('An Error Occurred.', 'image')
-
+                self.toasterWindow.RunToaster('An Error Occurred.', 'image')
 
 class MyTaskBarIcon(wx.TaskBarIcon):
-    global weburl, clipboxWindow, settings
     def __init__(self, frame):
         wx.TaskBarIcon.__init__(self)
 
         self.frame = frame
 
-        myimage = wx.Bitmap('images/spsprite.png', wx.BITMAP_TYPE_PNG)
+        myimage = wx.Bitmap('images/clipbox_icon.png', wx.BITMAP_TYPE_PNG)
         submyimage = myimage.GetSubBitmap(wx.Rect(0,0,16,16))
         myicon = wx.EmptyIcon()
         myicon.CopyFromBitmap(submyimage)
         self.SetIcon(myicon, 'ClipBox')
         self.Bind(wx.EVT_MENU, self.gotoweb, id=8)
-        self.Bind(wx.EVT_MENU, self.showPreferences, id=14)
+        self.Bind(wx.EVT_MENU, self.showSettings, id=14)
         self.Bind(wx.EVT_MENU, self.OnTaskBarClose, id=3)
         self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, self.on_left_click)
-
 
     def OnTaskBarClose(self, event):
         self.RemoveIcon()
         self.frame.Destroy()
-        clipboxWindow.toasterWindow.Destroy()
-        clipboxWindow.Destroy()
         for w in wx.GetTopLevelWindows():
             w.Destroy()
-            
+
     def on_left_click(self, e):
         self.PopupMenu(self.CreatePopupMenu())
 
     def CreatePopupMenu(self):
         tbmenu = wx.Menu()
-        tbmenu.Append(14, 'Preferences...')
+        tbmenu.Append(14, 'Settings...')
         tbmenu.Append(8, 'Go To Website')
         tbmenu.Append(3, 'Exit')
         return tbmenu
 
     def gotoweb(self, event):
-        global weburl
-        webbrowser.open(weburl)
+        webbrowser.open("https://github.com/seanybob/Clipbox")
 
-    def showPreferences(self, event):
-        if settings['os_version'] == 'osx':
-            subprocess.call("open config.txt", shell=True)
-        elif settings['os_version'] == 'win':
-            subprocess.call("start config.txt", shell=True)
-
+    def showSettings(self, event):
+        webbrowser.open("http://localhost:8181/")
+            
 class ToasterBox(wx.Frame):
    def __init__(self, parent, id, title):
        wx.Frame.__init__(self, parent, id, title)
@@ -360,7 +289,7 @@ class ToasterBox(wx.Frame):
         panel = wx.Panel(tbpanel, -1)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        horsizer1 = wx.BoxSizer(wx.HORIZONTAL)
+        horizontal_sizer1 = wx.BoxSizer(wx.HORIZONTAL)
 
         if type == "file":
             myimage = wx.Bitmap("images/file_icon_50.png", wx.BITMAP_TYPE_PNG)
@@ -371,14 +300,14 @@ class ToasterBox(wx.Frame):
         else:
             myimage = wx.Bitmap("images/text_icon_50.png", wx.BITMAP_TYPE_PNG)
         stbmp = wx.StaticBitmap(panel, -1, myimage)
-        horsizer1.Add(stbmp, 0)
+        horizontal_sizer1.Add(stbmp, 0)
 
         sttext = wx.StaticText(panel, -1, poptext)
         sttext.SetFont(wx.Font(7, wx.SWISS, wx.NORMAL, wx.NORMAL, False, "Verdana"))
-        horsizer1.Add(sttext, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 5)
+        horizontal_sizer1.Add(sttext, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 5)
 
         sizer.Add((0,5))
-        sizer.Add(horsizer1, 0, wx.EXPAND)
+        sizer.Add(horizontal_sizer1, 0, wx.EXPAND)
 
         sizer.Layout()
         panel.SetSizer(sizer)
@@ -387,49 +316,9 @@ class ToasterBox(wx.Frame):
         toaster.Play()
 
 class MyApp(wx.App):
-    global settings, clipboxWindow
     def OnInit(self):
-        global settings, clipboxWindow
-    
-        forcelogin = 0
-        try:
-            spdatafile = open('config.txt', 'r')
-            jsoncode = spdatafile.read()
-            spdatafile.close()
-            data = json.loads(jsoncode)
-            if 'use_ftp' in data:
-                settings['use_ftp'] = data['use_ftp']
-            if settings['use_ftp'] == 1:
-                settings['ftp_host'] = data['ftp_host']
-                settings['ftp_public_url'] = data['ftp_public_url']
-                settings['ftp_username'] = data['ftp_username']
-                settings['ftp_password'] = data['ftp_password']
-                settings['ftp_remote_dir'] = data['ftp_remote_dir']
-                if settings['ftp_host'] != '' and settings['ftp_public_url'] != '' and settings['ftp_username'] != '' and settings['ftp_password'] != '':
-                        clipboxWindow = mainFrame(None, -1, 'ClipBox') #already logged in
-                else:
-                    forcelogin = 1
-            else:
-                settings['db_public_path'] = data['db_public_path']
-                settings['db_public_url'] = data['db_public_url']
-                if settings['db_public_path'] != '' and settings['db_public_url'] != '':
-                    if not os.path.isdir(settings['db_public_path']):
-                        forcelogin = 1
-                    else:
-                        clipboxWindow = mainFrame(None, -1, 'ClipBox') #already logged in
-                else:
-                    forcelogin = 1
-        except:
-            forcelogin = 1
-            
-
-        if forcelogin == 1:
-            if settings['os_version'] == 'osx':
-                subprocess.call("open config.txt", shell=True)
-            elif settings['os_version'] == 'win':
-                subprocess.call("start config.txt", shell=True)
-            sys.exit()
-
+        load_settings()
+        mainFrame(None, -1, 'ClipBox') #already logged in
         return True
 
     def onCloseIt(self, event):
