@@ -3,7 +3,11 @@ import wx
 import random
 import os
 import time
-import toasterbox #popup in lower right for new pastes
+
+# For the Notifications
+from Foundation import NSUserNotification, NSObject, NSDictionary
+from Foundation import NSUserNotificationCenter
+
 import webbrowser #to open http links in user's preferred browser
 import shutil #to copy files to the sent directory
 
@@ -59,7 +63,6 @@ class mainFrame(wx.Frame):
         wx.GetApp().Bind(wx.EVT_END_SESSION, self.onFullClose)
         self.Bind(wx.EVT_CLOSE, self.onFullClose)
 
-        wx.CallAfter(self.createToasterWindow)
         wx.CallAfter(self.StartServer) 
         self.Layout()
         
@@ -77,9 +80,6 @@ class mainFrame(wx.Frame):
                     pop_settings_ui = True
         if pop_settings_ui:
             webbrowser.open("http://localhost:8181/")
-
-    def createToasterWindow(self):
-        self.toasterWindow = ToasterBox(None, -1, 'ToasterBox')
 
     def onFullClose(self, event):
         for w in wx.GetTopLevelWindows():
@@ -191,9 +191,9 @@ class mainFrame(wx.Frame):
                     public_paste_url = 'http://dl.dropbox.com/u/'+settings['db_public_url']+'/' + '.clipbox/'+pasteID
     
                 self.copyToClipboard(public_paste_url)
-                self.toasterWindow.RunToaster('Download URL copied to your Clipboard!', 'file')
+                notify('Download URL copied to your Clipboard!')
             except:
-                self.toasterWindow.RunToaster('An Error Occurred.', 'file')
+                notify('An Error Occurred.')
         elif successt:
             
             pasteID = time.strftime("%Y-%m-%d_%H-%M-%S", time.gmtime())+''.join(random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') for x in range(6))
@@ -212,9 +212,9 @@ class mainFrame(wx.Frame):
                     datafo.close()
                     public_paste_url = 'http://dl.dropbox.com/u/'+settings['db_public_url']+'/' + '.clipbox/'+pasteID
                     self.copyToClipboard(public_paste_url)
-                self.toasterWindow.RunToaster('Download URL copied to your Clipboard!', 'text')
+                notify('Download URL copied to your Clipboard!')
             except:
-                self.toasterWindow.RunToaster('An Error Occurred.', 'text')
+                notify('An Error Occurred.')
         elif successb:
             pasteID = time.strftime("%Y-%m-%d_%H-%M-%S", time.gmtime())+''.join(random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') for x in range(6))+".png"
             bimg.SaveFile('temp/'+pasteID, wx.BITMAP_TYPE_PNG)
@@ -232,9 +232,9 @@ class mainFrame(wx.Frame):
                 if wx.TheClipboard.Open():
                     successt = wx.TheClipboard.SetData(td)
                     wx.TheClipboard.Close()
-                self.toasterWindow.RunToaster('Download URL copied to your Clipboard!', 'image')
+                notify('Download URL copied to your Clipboard!')
             except ImportWarning:
-                self.toasterWindow.RunToaster('An Error Occurred.', 'image')
+                notify('An Error Occurred.')
 
 class MyTaskBarIcon(wx.TaskBarIcon):
     def __init__(self, frame):
@@ -273,47 +273,14 @@ class MyTaskBarIcon(wx.TaskBarIcon):
 
     def showSettings(self, event):
         webbrowser.open("http://localhost:8181/")
-            
-class ToasterBox(wx.Frame):
-   def __init__(self, parent, id, title):
-       wx.Frame.__init__(self, parent, id, title)
-       self.panel = wx.Panel(self)
-       self.Show(False)
 
-   def RunToaster(self, poptext, type):
-        toaster = toasterbox.ToasterBox(self, tbstyle=toasterbox.TB_COMPLEX)
-        toaster.SetPopupPositionByInt(3)
-        toaster.SetPopupPauseTime(5000)
+def notify(text, url):
 
-        tbpanel = toaster.GetToasterBoxWindow()
-        panel = wx.Panel(tbpanel, -1)
-
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        horizontal_sizer1 = wx.BoxSizer(wx.HORIZONTAL)
-
-        if type == "file":
-            myimage = wx.Bitmap("images/file_icon_50.png", wx.BITMAP_TYPE_PNG)
-        elif type == "text":
-            myimage = wx.Bitmap("images/text_icon_50.png", wx.BITMAP_TYPE_PNG)
-        elif type == "image":
-            myimage = wx.Bitmap("images/image_icon_50.png", wx.BITMAP_TYPE_PNG)
-        else:
-            myimage = wx.Bitmap("images/text_icon_50.png", wx.BITMAP_TYPE_PNG)
-        stbmp = wx.StaticBitmap(panel, -1, myimage)
-        horizontal_sizer1.Add(stbmp, 0)
-
-        sttext = wx.StaticText(panel, -1, poptext)
-        sttext.SetFont(wx.Font(7, wx.SWISS, wx.NORMAL, wx.NORMAL, False, "Verdana"))
-        horizontal_sizer1.Add(sttext, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 5)
-
-        sizer.Add((0,5))
-        sizer.Add(horizontal_sizer1, 0, wx.EXPAND)
-
-        sizer.Layout()
-        panel.SetSizer(sizer)
-
-        toaster.AddPanel(panel)
-        toaster.Play()
+    notification = NSUserNotification.alloc().init()
+    notification.setTitle_('Clipbox')
+    notification.setInformativeText_(text)
+    center = NSUserNotificationCenter.defaultUserNotificationCenter()
+    center.deliverNotification_(notification)
 
 class MyApp(wx.App):
     def OnInit(self):
