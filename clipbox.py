@@ -274,7 +274,7 @@ class MyTaskBarIcon(wx.TaskBarIcon):
     def showSettings(self, event):
         webbrowser.open("http://localhost:8181/")
 
-def notify(text, url):
+def notify(text):
 
     notification = NSUserNotification.alloc().init()
     notification.setTitle_('Clipbox')
