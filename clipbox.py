@@ -202,16 +202,16 @@ class mainFrame(wx.Frame):
                     tmpf = open("tmptxt", 'w')
                     tmpf.write(pasteText)
                     tmpf.close()
+                    public_paste_url = settings['ftp_public_url']+pasteID
+                    self.copyToClipboard(public_paste_url)
                     ftp_conn = FTP(settings['ftp_host'], settings['ftp_username'], settings['ftp_password'])
                     ftp_conn.storbinary('STOR '+settings['ftp_remote_dir']+pasteID, open("tmptxt"))
-                    public_paste_url = settings['ftp_public_url']+pasteID
                 else:
                     datafo = open(settings['db_public_path']+'.clipbox/'+pasteID, 'w')
                     datafo.write(pasteText)
                     datafo.close()
                     public_paste_url = 'http://dl.dropbox.com/u/'+settings['db_public_url']+'/' + '.clipbox/'+pasteID
-
-                self.copyToClipboard(public_paste_url)
+                    self.copyToClipboard(public_paste_url)
                 self.toasterWindow.RunToaster('Download URL copied to your Clipboard!', 'text')
             except:
                 self.toasterWindow.RunToaster('An Error Occurred.', 'text')
