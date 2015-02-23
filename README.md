@@ -5,8 +5,10 @@ https://dl.dropboxusercontent.com/u/4238738/clipbox.app.zip
 
 #Special Screencast Version
 - Adds cmd+shift+g shortcut to record gif screencast
+
 OSX:
 https://dl.dropboxusercontent.com/u/4238738/Clipbox_Screencast.app.zip
+
 To Enable GIF screencast support, you must run this:
 ```
 $ brew install imagemagick --disable-openmp --build-from-source
