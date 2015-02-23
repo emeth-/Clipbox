@@ -30,6 +30,7 @@ settings = {
     "key_second_mod": "MOD_SHIFT",
     "key_copy": "C",
     "key_screenshot": "X",
+    "key_screencast": "G",
 }
 
 def load_settings():
@@ -47,10 +48,12 @@ class mainFrame(wx.Frame):
     def __init__(self, parent, id, title):
         style = wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER
         self.window = wx.Frame.__init__(self, parent, id, title, size=(450,555), style=style)
+        self.screencastInProgress = False
 
         self.regHotKey()
         self.Bind(wx.EVT_HOTKEY, self.handleHotKey, id=self.hotCopy)
         self.Bind(wx.EVT_HOTKEY, self.handleHotKey, id=self.hotScreenRect)
+        self.Bind(wx.EVT_HOTKEY, self.handleHotKey, id=self.hotScreenCast)
 
         icon1 = wx.Icon("images/clipbox_icon.png", wx.BITMAP_TYPE_PNG)
         self.SetIcon(icon1)
@@ -138,16 +141,44 @@ class mainFrame(wx.Frame):
             eval("wx."+settings['key_first_mod']) | eval("wx."+settings['key_second_mod']),
             ord(settings['key_screenshot']))
 
+        self.hotScreenCast = 107
+        self.RegisterHotKey(
+            self.hotScreenCast, #a unique ID for this hotkey
+            eval("wx."+settings['key_first_mod']) | eval("wx."+settings['key_second_mod']),
+            ord("G"))
+
     def handleHotKey(self, evt):
         eventId = evt.GetId()
         if eventId == self.hotScreenRect: 
             os.system('screencapture -c -i') #allow user to draw rectangle screenshot, copy image to clipboard
             self.onHotCopy()
-        if eventId == self.hotCopy: 
+        elif eventId == self.hotCopy:
             time.sleep(1)
             os.system("""osascript -e 'tell application "System Events" to keystroke "c" using {command down}'""") #send copy command.
             time.sleep(1.5)
             self.onHotCopy()
+        elif eventId == self.hotScreenCast:
+            if not self.screencastInProgress:
+                self.screencastInProgress = True
+                time.sleep(1)
+                os.system('rm -rf screencast_images')
+                os.system('mkdir screencast_images')
+                notify('Screencast started, hit cmd+shift+g again to end, or wait 15 seconds.')
+                thread.start_new_thread(self._startScreencast, ())
+            else:
+                self.screencastInProgress = False
+
+    def _startScreencast(self):
+        for i in range(1000, 1045):
+            time.sleep(0.33)
+            os.system('screencapture -r -x -m ./screencast_images/'+str(i)+".png")
+            if not self.screencastInProgress:
+                break #If they hit shortcut key again, break early
+        pasteID = time.strftime("%Y-%m-%d_%H-%M-%S", time.gmtime())+''.join(random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') for x in range(6))
+        notify('Generating gif...')
+        os.system("./convert -delay 20 -loop 0 screencast_images/*png screencast_images/"+pasteID+".gif")
+        self.onHotCopy(override_file="screencast_images/"+pasteID+".gif")
+
 
     def copyToClipboard(self, text):
         td = wx.TextDataObject()
@@ -158,7 +189,7 @@ class mainFrame(wx.Frame):
             return True
         return False
             
-    def onHotCopy(self):
+    def onHotCopy(self, override_file=None):
         global settings
         if wx.TheClipboard.Open():
             td = wx.TextDataObject()
@@ -178,8 +209,11 @@ class mainFrame(wx.Frame):
             if not os.path.exists(settings['db_public_path'] + '.clipbox/'):
                 os.makedirs(settings['db_public_path'] + '.clipbox/')
 
-        if successf:
-            allFileNames = fd.GetFilenames()
+        if successf or override_file:
+            if override_file:
+                allFileNames = [override_file]
+            else:
+                allFileNames = fd.GetFilenames()
             pasteID =  os.path.basename(allFileNames[0])
             try:
                 if settings['backend'] == "ftp":
